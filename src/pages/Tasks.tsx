@@ -26,7 +26,14 @@ const Tasks: React.FC = () => {
           .order("created_at", { ascending: false });
 
         if (tasksError) throw tasksError;
-        setTasks(tasksData || []);
+        // Convert type field to match the Task interface type
+        const typedTasks = tasksData?.map(task => ({
+          ...task,
+          type: task.type as 'daily' | 'weekly',
+          difficulty: task.difficulty as 'easy' | 'medium' | 'hard'
+        }));
+        
+        setTasks(typedTasks || []);
 
         if (user) {
           const { data: userTasksData, error: userTasksError } = await supabase
