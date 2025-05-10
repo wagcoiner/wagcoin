@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
-import { Coins, Award, Check } from "lucide-react";
+import { Coins, Award, Check, ExternalLink } from "lucide-react";
 
 const Tasks: React.FC = () => {
   const { user, walletAddress } = useWallet();
@@ -98,7 +98,7 @@ const Tasks: React.FC = () => {
         supabase.removeChannel(userTasksSubscription);
       }
     };
-  }, [user?.id]);
+  }, [user?.id, toast]);
 
   const handleCompleteTask = async (task: Task) => {
     if (!user) {
@@ -305,6 +305,20 @@ const TaskCard: React.FC<{
               {task.type === "daily" ? "Daily Task" : "Weekly Task"}
             </div>
           </div>
+          
+          {task.url && (
+            <div className="mt-3">
+              <a 
+                href={task.url} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-sm flex items-center gap-1.5 text-blue-400 hover:text-blue-300"
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+                Visit task link
+              </a>
+            </div>
+          )}
         </CardContent>
         <CardFooter className="pt-0">
           <Button
