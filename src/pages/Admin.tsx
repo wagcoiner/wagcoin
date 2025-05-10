@@ -1,5 +1,6 @@
 
-import React from "react";
+import React, { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useWallet } from "@/contexts/WalletContext";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -45,6 +46,14 @@ const AdminPage: React.FC = () => {
   const { user } = useWallet();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const isAdmin = localStorage.getItem("wagcoin_admin") === "true";
+  
+  useEffect(() => {
+    // Redirect to admin login if not admin
+    if (!isAdmin) {
+      navigate("/admin-login");
+    }
+  }, [isAdmin, navigate]);
   
   // Initialize form with validation schema
   const form = useForm<TaskFormValues>({
@@ -97,23 +106,19 @@ const AdminPage: React.FC = () => {
     }
   };
 
-  // Check if user is authenticated and has admin privileges
-  // For now, we'll just check if the user exists
-  if (!user) {
+  // If not admin or logged in user, show access required message
+  if (!isAdmin) {
     return (
       <div className="container mx-auto px-4 py-12 text-center">
         <AlertTriangle className="h-16 w-16 text-yellow-400 mx-auto mb-4" />
         <h1 className="text-2xl font-bold mb-4">Admin Access Required</h1>
-        <p className="mb-6">Please connect your wallet to access admin features.</p>
-        <Button onClick={() => navigate("/")}>
-          Return to Home <ArrowRight className="ml-2" />
+        <p className="mb-6">Please log in to access admin features.</p>
+        <Button onClick={() => navigate("/admin-login")}>
+          Go to Admin Login <ArrowRight className="ml-2" />
         </Button>
       </div>
     );
   }
-
-  // In a production environment, you'd check if user has admin role here
-  // For now, we'll allow any authenticated user to use admin features
 
   return (
     <div className="container mx-auto px-4 py-12">
@@ -122,7 +127,19 @@ const AdminPage: React.FC = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <h1 className="text-3xl font-bold mb-8 text-center">Admin Dashboard</h1>
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold text-center">Admin Dashboard</h1>
+          <Button 
+            variant="outline" 
+            onClick={() => {
+              localStorage.removeItem("wagcoin_admin");
+              navigate("/");
+            }}
+            className="border-red-500/50 text-red-500 hover:bg-red-500/10"
+          >
+            Logout
+          </Button>
+        </div>
 
         <Card className="max-w-3xl mx-auto border-neon-green/20 bg-gray-900">
           <CardHeader>
@@ -198,6 +215,7 @@ const AdminPage: React.FC = () => {
                           <Input
                             placeholder="https://example.com"
                             {...field}
+                            value={field.value || ""}
                           />
                         </FormControl>
                         <FormDescription>

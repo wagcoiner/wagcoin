@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
-import { Coins, Users, Copy, Award } from "lucide-react";
+import { Coins, Users, Copy, Award, Loader2 } from "lucide-react";
 
 interface ReferredUser {
   id: string;
@@ -16,15 +16,20 @@ interface ReferredUser {
 }
 
 const Referrals: React.FC = () => {
-  const { user, walletAddress } = useWallet();
+  const { user, walletAddress, isLoading: isWalletLoading } = useWallet();
   const [referredUsers, setReferredUsers] = useState<ReferredUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [copyingLink, setCopyingLink] = useState(false);
+  const [copyingCode, setCopyingCode] = useState(false);
   const { toast } = useToast();
   const location = useLocation();
 
   useEffect(() => {
     const fetchReferredUsers = async () => {
-      if (!user?.id) return;
+      if (!user?.id) {
+        setIsLoading(false);
+        return;
+      }
 
       try {
         setIsLoading(true);
@@ -87,6 +92,7 @@ const Referrals: React.FC = () => {
   const handleCopyReferralLink = () => {
     if (!user?.referral_code) return;
 
+    setCopyingLink(true);
     const baseUrl = window.location.origin;
     const referralLink = `${baseUrl}/?ref=${user.referral_code}`;
     
@@ -96,6 +102,7 @@ const Referrals: React.FC = () => {
           title: "Copied!",
           description: "Referral link copied to clipboard",
         });
+        setCopyingLink(false);
       },
       (err) => {
         console.error("Could not copy text: ", err);
@@ -104,6 +111,7 @@ const Referrals: React.FC = () => {
           description: "Failed to copy referral link",
           variant: "destructive",
         });
+        setCopyingLink(false);
       }
     );
   };
@@ -111,12 +119,14 @@ const Referrals: React.FC = () => {
   const handleCopyReferralCode = () => {
     if (!user?.referral_code) return;
     
+    setCopyingCode(true);
     navigator.clipboard.writeText(user.referral_code).then(
       () => {
         toast({
           title: "Copied!",
           description: "Referral code copied to clipboard",
         });
+        setCopyingCode(false);
       },
       (err) => {
         console.error("Could not copy text: ", err);
@@ -125,9 +135,19 @@ const Referrals: React.FC = () => {
           description: "Failed to copy referral code",
           variant: "destructive",
         });
+        setCopyingCode(false);
       }
     );
   };
+
+  if (isWalletLoading) {
+    return (
+      <div className="container mx-auto px-4 py-12 flex flex-col items-center justify-center min-h-[60vh] text-center">
+        <Loader2 className="h-16 w-16 text-neon-green mb-4 animate-spin" />
+        <h1 className="text-3xl font-bold mb-4">Loading...</h1>
+      </div>
+    );
+  }
 
   if (!walletAddress) {
     return (
@@ -173,8 +193,13 @@ const Referrals: React.FC = () => {
                         variant="ghost" 
                         className="absolute right-4 top-1/2 transform -translate-y-1/2 text-neon-green hover:text-white hover:bg-neon-green/20"
                         onClick={handleCopyReferralLink}
+                        disabled={copyingLink}
                       >
-                        <Copy className="h-5 w-5" />
+                        {copyingLink ? (
+                          <Loader2 className="h-5 w-5 animate-spin" />
+                        ) : (
+                          <Copy className="h-5 w-5" />
+                        )}
                       </Button>
                     </div>
 
@@ -190,8 +215,13 @@ const Referrals: React.FC = () => {
                             variant="ghost" 
                             className="text-neon-green hover:text-white hover:bg-neon-green/20"
                             onClick={handleCopyReferralCode}
+                            disabled={copyingCode}
                           >
-                            <Copy className="h-4 w-4" />
+                            {copyingCode ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Copy className="h-4 w-4" />
+                            )}
                           </Button>
                         </div>
                       </div>
@@ -223,7 +253,9 @@ const Referrals: React.FC = () => {
                     </div>
                   </>
                 ) : (
-                  <p className="text-gray-400">Connect your wallet to see your referral details</p>
+                  <div className="flex justify-center items-center py-10">
+                    <Loader2 className="h-8 w-8 text-neon-green animate-spin" />
+                  </div>
                 )}
               </CardContent>
             </Card>
@@ -244,7 +276,9 @@ const Referrals: React.FC = () => {
             </CardHeader>
             <CardContent>
               {isLoading ? (
-                <p className="text-gray-400 text-center py-8">Loading...</p>
+                <div className="flex justify-center items-center py-10">
+                  <Loader2 className="h-8 w-8 text-neon-green animate-spin" />
+                </div>
               ) : referredUsers.length > 0 ? (
                 <div className="space-y-3">
                   {referredUsers.map((referredUser) => (

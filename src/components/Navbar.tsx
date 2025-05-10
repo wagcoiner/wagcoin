@@ -4,12 +4,13 @@ import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useWallet } from "@/contexts/WalletContext";
 import { useReferralFromURL } from "@/utils/referral";
-import { Wallet, Coins } from "lucide-react";
+import { Wallet, Coins, Loader2, Shield } from "lucide-react";
 
 const Navbar = () => {
-  const { walletAddress, user, connect, disconnect, isLoading } = useWallet();
+  const { walletAddress, user, connect, disconnect, isLoading, isConnecting } = useWallet();
   const location = useLocation();
   const referralCode = useReferralFromURL();
+  const isAdmin = localStorage.getItem("wagcoin_admin") === "true";
   
   const handleConnect = () => {
     connect(referralCode);
@@ -48,6 +49,21 @@ const Navbar = () => {
               {item.label}
             </Link>
           ))}
+          
+          {/* Admin link - only shown if admin is logged in */}
+          {isAdmin && (
+            <Link
+              to="/admin"
+              className={`px-4 py-2 rounded-md transition-colors flex items-center ${
+                location.pathname === "/admin"
+                  ? "text-neon-green bg-neon-green/10"
+                  : "text-gray-300 hover:text-neon-green hover:bg-black/20"
+              }`}
+            >
+              <Shield className="mr-1 h-4 w-4" />
+              Admin
+            </Link>
+          )}
         </div>
         
         <div className="flex items-center gap-4">
@@ -57,8 +73,13 @@ const Navbar = () => {
               <span className="text-neon-green font-medium">{user.balance}</span>
             </div>
           )}
-          
-          {walletAddress ? (
+
+          {isLoading ? (
+            <Button variant="outline" disabled className="border-neon-green/50 text-neon-green">
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Loading...
+            </Button>
+          ) : walletAddress ? (
             <Button
               variant="outline"
               className="border-neon-green/50 text-neon-green hover:bg-neon-green/10"
@@ -71,10 +92,34 @@ const Navbar = () => {
             <Button
               onClick={handleConnect}
               className="bg-neon-green hover:bg-neon-green/90 text-black"
-              disabled={isLoading}
+              disabled={isConnecting}
             >
-              <Wallet className="mr-2 h-4 w-4" /> 
-              {isLoading ? "Connecting..." : "Connect Wallet"}
+              {isConnecting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
+                  Connecting...
+                </>
+              ) : (
+                <>
+                  <Wallet className="mr-2 h-4 w-4" /> 
+                  Connect Wallet
+                </>
+              )}
+            </Button>
+          )}
+          
+          {/* Admin Login Button - only shown if not admin */}
+          {!isAdmin && location.pathname !== "/admin-login" && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-gray-400 hover:text-gray-300"
+              asChild
+            >
+              <Link to="/admin-login">
+                <Shield className="h-4 w-4 mr-1" />
+                Admin
+              </Link>
             </Button>
           )}
         </div>
