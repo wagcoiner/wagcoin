@@ -20,12 +20,12 @@ const Navbar = () => {
     <header className="fixed z-50 w-full bg-black border-b border-gray-800">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         <Link to="/" className="font-bold text-2xl text-neon-green flex items-center">
-          <span className="mr-2">WagChain</span>
-          <img
-            src="https://upload.wikimedia.org/wikipedia/en/5/58/Doge_meme_photo.jpg"
+          <img 
+            src="/wagcoin-mascot.svg" 
             alt="WagChain"
-            className="h-8 w-8 rounded-full bg-neon-green/20 p-1"
+            className="h-9 w-9 mr-2" 
           />
+          <span>WagChain</span>
         </Link>
         
         <div className="hidden md:flex items-center gap-2">
@@ -34,6 +34,7 @@ const Navbar = () => {
             { path: "/tasks", label: "Tasks" },
             { path: "/referrals", label: "Referrals" },
             { path: "/leaderboard", label: "Leaderboard" },
+            { path: "/airdrop", label: "Airdrop" },
             { path: "/coinomics", label: "Coinomics" },
             { path: "/about", label: "About" },
           ].map((item) => (

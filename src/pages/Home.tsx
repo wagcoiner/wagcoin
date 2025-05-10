@@ -7,7 +7,8 @@ import { useReferralFromURL } from "@/utils/referral";
 import { motion } from "framer-motion";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent } from "@/components/ui/card";
-import { Calendar, Route, Map, TrendingUp } from "lucide-react";
+import { Calendar, Route, Map, TrendingUp, DollarSign } from "lucide-react";
+import Supporters from "@/components/Supporters";
 
 const Home = () => {
   const { walletAddress, user, connect } = useWallet();
@@ -64,6 +65,29 @@ const Home = () => {
               </>
             )}
           </div>
+          
+          {/* Total Funds Raised Card */}
+          <motion.div 
+            className="mt-12 max-w-sm mx-auto"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+          >
+            <Card className="bg-gradient-to-br from-gray-900 to-black border-neon-green/20">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-gray-400 text-sm">Total Funds Raised</p>
+                    <h3 className="text-3xl font-bold text-white mt-1">$214,500</h3>
+                    <p className="text-gray-400 text-sm mt-1">USDT</p>
+                  </div>
+                  <div className="bg-neon-green/20 p-3 rounded-full">
+                    <DollarSign className="text-neon-green h-7 w-7" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
           
           <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
             <motion.div 
@@ -300,6 +324,42 @@ const Home = () => {
                 </div>
               </div>
             </motion.div>
+            
+            {/* Phase 4 - New CEX Listing milestone */}
+            <motion.div 
+              className="flex flex-col md:flex-row gap-8 items-center" 
+              initial={{ opacity: 0, x: 20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5 }}
+              viewport={{ once: true, margin: "-100px" }}
+            >
+              <div className="md:order-2 bg-neon-green/10 border border-neon-green/30 rounded-full p-6 md:min-w-[120px] flex items-center justify-center aspect-square">
+                <Calendar className="h-10 w-10 text-neon-green" />
+              </div>
+              <div className="flex-1 md:mr-8 md:order-1">
+                <div className="bg-gray-900 rounded-xl p-6 border border-gray-800 relative hover:border-neon-green/20 transition-colors duration-300">
+                  <h3 className="text-neon-green text-xl font-bold mb-2">Phase 4: CEX Listing (Q4 2025)</h3>
+                  <ul className="space-y-2 text-gray-300">
+                    <li className="flex items-start">
+                      <span className="text-neon-green mr-2">✓</span>
+                      <span>Major centralized exchange listings for $WAGCoin</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-gray-500 mr-2">•</span>
+                      <span>Expanded ecosystem integrations</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-gray-500 mr-2">•</span>
+                      <span>Global marketing campaigns</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-gray-500 mr-2">•</span>
+                      <span>Enterprise partnerships for wider adoption</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </motion.div>
           </div>
 
           <div className="mt-16 text-center">
@@ -313,6 +373,9 @@ const Home = () => {
           </div>
         </div>
       </motion.div>
+      
+      {/* Our Supporters Section */}
+      <Supporters />
     </div>
   );
 };

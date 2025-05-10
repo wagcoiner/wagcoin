@@ -14,6 +14,7 @@ import Coinomics from "@/pages/Coinomics";
 import About from "@/pages/About";
 import Admin from "@/pages/Admin";
 import AdminLogin from "@/pages/AdminLogin";
+import Airdrop from "@/pages/Airdrop";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,6 +33,7 @@ const App = () => (
               <Route path="/referrals" element={<Referrals />} />
               <Route path="/leaderboard" element={<Leaderboard />} />
               <Route path="/coinomics" element={<Coinomics />} />
+              <Route path="/airdrop" element={<Airdrop />} />
               <Route path="/about" element={<About />} />
               <Route path="/admin" element={<Admin />} />
               <Route path="/admin-login" element={<AdminLogin />} />
