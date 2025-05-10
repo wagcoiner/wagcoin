@@ -4,9 +4,13 @@ import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useWallet } from "@/contexts/WalletContext";
 import { useReferralFromURL } from "@/utils/referral";
-import { Wallet, Coins, Loader2, Shield } from "lucide-react";
+import { Wallet, Coins, Loader2, Shield, Menu } from "lucide-react";
 
-const Navbar = () => {
+interface NavbarProps {
+  onOpenMobileMenu?: () => void;
+}
+
+const Navbar: React.FC<NavbarProps> = ({ onOpenMobileMenu }) => {
   const { walletAddress, user, connect, disconnect, isLoading, isConnecting } = useWallet();
   const location = useLocation();
   const referralCode = useReferralFromURL();
@@ -19,14 +23,22 @@ const Navbar = () => {
   return (
     <header className="fixed z-50 w-full bg-black border-b border-gray-800">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-        <Link to="/" className="font-bold text-2xl text-neon-green flex items-center">
-          <img 
-            src="/wagcoin-mascot.svg" 
-            alt="WagChain"
-            className="h-9 w-9 mr-2" 
-          />
-          <span>WagChain</span>
-        </Link>
+        <div className="flex items-center">
+          <button 
+            className="mr-3 md:hidden p-2 rounded-md text-gray-300 hover:text-white hover:bg-gray-800"
+            onClick={onOpenMobileMenu}
+          >
+            <Menu className="h-5 w-5" />
+          </button>
+          <Link to="/" className="font-bold text-2xl text-neon-green flex items-center">
+            <img 
+              src="/wagcoin-mascot.svg" 
+              alt="WagChain"
+              className="h-9 w-9 mr-2" 
+            />
+            <span>WagChain</span>
+          </Link>
+        </div>
         
         <div className="hidden md:flex items-center gap-2">
           {[

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useWallet } from "@/contexts/WalletContext";
 import { Task, UserTask } from "@/types";
@@ -9,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 import { Coins, Award, Check, ExternalLink } from "lucide-react";
+import UserBalance from "@/components/UserBalance";
 
 const Tasks: React.FC = () => {
   const { user, walletAddress } = useWallet();
@@ -187,21 +187,7 @@ const Tasks: React.FC = () => {
         
         {user && (
           <div className="flex justify-center mt-6">
-            <div className="bg-gray-900 border border-neon-green/20 rounded-full px-6 py-3 inline-flex items-center gap-3">
-              <div className="flex items-center gap-2">
-                <span className="text-gray-400">Daily Streak:</span>
-                <span className="font-bold text-neon-green flex items-center gap-1">
-                  <Award className="h-4 w-4" />{user.daily_streak} days
-                </span>
-              </div>
-              <div className="w-0.5 h-6 bg-gray-700"></div>
-              <div className="flex items-center gap-2">
-                <span className="text-gray-400">Balance:</span>
-                <span className="font-bold text-neon-green flex items-center gap-1">
-                  <Coins className="h-4 w-4" />{user.balance} $WAG
-                </span>
-              </div>
-            </div>
+            <UserBalance size="large" />
           </div>
         )}
       </div>
