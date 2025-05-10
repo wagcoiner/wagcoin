@@ -1,7 +1,6 @@
-
 import React from "react";
 import { Link } from "react-router-dom";
-import { Telegram, Twitter, Discord, Home, Calendar, Users, Gift, FileText } from "lucide-react";
+import { MessageCircle, Twitter as TwitterIcon, MailIcon, Home, CalendarDays, Users, Gift, FileText } from "lucide-react";
 
 const Footer = () => {
   return (
@@ -25,15 +24,15 @@ const Footer = () => {
           <div className="flex gap-4">
             <a href="https://t.me/wagcoin" target="_blank" rel="noopener noreferrer" 
               className="bg-gray-800 p-2 rounded-full hover:bg-gray-700 transition-colors">
-              <Telegram className="h-5 w-5 text-neon-green" />
+              <MessageCircle className="h-5 w-5 text-neon-green" />
             </a>
             <a href="https://twitter.com/wagcoin" target="_blank" rel="noopener noreferrer" 
               className="bg-gray-800 p-2 rounded-full hover:bg-gray-700 transition-colors">
-              <Twitter className="h-5 w-5 text-neon-green" />
+              <TwitterIcon className="h-5 w-5 text-neon-green" />
             </a>
             <a href="https://discord.gg/wagcoin" target="_blank" rel="noopener noreferrer" 
               className="bg-gray-800 p-2 rounded-full hover:bg-gray-700 transition-colors">
-              <Discord className="h-5 w-5 text-neon-green" />
+              <MailIcon className="h-5 w-5 text-neon-green" />
             </a>
           </div>
         </div>
@@ -49,7 +48,7 @@ const Footer = () => {
               </li>
               <li>
                 <Link to="/tasks" className="text-gray-400 hover:text-neon-green flex items-center gap-2">
-                  <Calendar className="h-4 w-4" /> Tasks
+                  <CalendarDays className="h-4 w-4" /> Tasks
                 </Link>
               </li>
               <li>

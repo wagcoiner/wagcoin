@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { motion } from "framer-motion";
-import { Gift, Zap, Clock } from "lucide-react";
+import { Gift, Zap, Clock, CalendarDays, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { useWallet } from "@/contexts/WalletContext";
@@ -132,7 +132,7 @@ const AirdropPage = () => {
             <Card className="bg-gray-900 border border-neon-green/20 hover:border-neon-green/50 transition-all">
               <CardContent className="p-6">
                 <div className="bg-neon-green/20 p-3 rounded-full w-fit mb-4">
-                  <Calendar className="h-6 w-6 text-neon-green" />
+                  <CalendarDays className="h-6 w-6 text-neon-green" />
                 </div>
                 <h3 className="text-xl font-semibold mb-2">Complete Tasks</h3>
                 <p className="text-gray-400">
