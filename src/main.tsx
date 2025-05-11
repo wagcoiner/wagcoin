@@ -9,7 +9,7 @@ import '@rainbow-me/rainbowkit/styles.css';
 
 createRoot(document.getElementById("root")!).render(
   <WagmiConfig config={wagmiConfig}>
-    <RainbowKitProvider>
+    <RainbowKitProvider chains={wagmiConfig.chains}>
       <App />
     </RainbowKitProvider>
   </WagmiConfig>

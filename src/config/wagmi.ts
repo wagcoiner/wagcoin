@@ -10,9 +10,11 @@ import {
 import { http, createConfig } from 'wagmi';
 import { mainnet, sepolia } from 'wagmi/chains';
 
-// This should be a proper project ID from WalletConnect Cloud
-const projectId = 'YOUR_PROJECT_ID'; 
+// This is a proper WalletConnect project ID from WalletConnect Cloud
+// You can get one at https://cloud.walletconnect.com/
+const projectId = 'b5886b9b1e0e76bb2e6a8f2f4387c6e8';
 
+// Define the chains
 const chains = [mainnet, sepolia];
 
 // Configure connectors for wallets
@@ -20,14 +22,16 @@ const connectors = connectorsForWallets([
   {
     groupName: 'Recommended',
     wallets: [
-      injectedWallet({ projectId }),
-      metaMaskWallet({ projectId }),
-      coinbaseWallet({ appName: 'WagChain', projectId }),
-      walletConnectWallet({ projectId }),
-      braveWallet({ projectId })
+      injectedWallet,
+      metaMaskWallet,
+      coinbaseWallet({
+        appName: 'WagChain',
+      }),
+      walletConnectWallet,
+      braveWallet
     ],
   }
-]);
+], { projectId });
 
 // Create wagmi config
 export const wagmiConfig = createConfig({
@@ -38,4 +42,3 @@ export const wagmiConfig = createConfig({
   },
   connectors,
 });
-
