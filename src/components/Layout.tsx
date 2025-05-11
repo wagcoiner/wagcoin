@@ -5,9 +5,14 @@ import Footer from "./Footer";
 import { Toaster } from "@/components/ui/toaster";
 import MobileMenu from "./MobileMenu";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { useAccount } from "wagmi";
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { isConnected } = useAccount();
+
+  // Log connection status for debugging
+  console.log("Wagmi isConnected:", isConnected);
 
   return (
     <div className="min-h-screen flex flex-col bg-black text-white">

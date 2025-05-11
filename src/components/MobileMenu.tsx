@@ -11,10 +11,9 @@ import {
   Coins, 
   FileText, 
   Shield,
-  X,
-  Wallet
+  X
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { ConnectButton } from '@rainbow-me/rainbowkit';
 
 interface MobileMenuProps {
   onClose: () => void;
@@ -22,7 +21,7 @@ interface MobileMenuProps {
 
 const MobileMenu: React.FC<MobileMenuProps> = ({ onClose }) => {
   const location = useLocation();
-  const { walletAddress, user, connect, disconnect } = useWallet();
+  const { user } = useWallet();
   const isAdmin = localStorage.getItem("wagcoin_admin") === "true";
 
   const menuItems = [
@@ -94,30 +93,14 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ onClose }) => {
       )}
       
       <div className="p-4 border-t border-gray-800">
-        {walletAddress ? (
-          <Button
-            variant="outline"
-            className="w-full border-neon-green/50 text-neon-green hover:bg-neon-green/10"
-            onClick={() => {
-              disconnect();
-              onClose();
-            }}
-          >
-            <Wallet className="mr-2 h-4 w-4" />
-            Disconnect Wallet
-          </Button>
-        ) : (
-          <Button
-            className="w-full bg-neon-green hover:bg-neon-green/90 text-black"
-            onClick={() => {
-              connect();
-              onClose();
-            }}
-          >
-            <Wallet className="mr-2 h-4 w-4" />
-            Connect Wallet
-          </Button>
-        )}
+        {/* RainbowKit Connect Button */}
+        <div className="flex justify-center">
+          <ConnectButton
+            showBalance={false}
+            chainStatus="icon"
+            accountStatus="address"
+          />
+        </div>
       </div>
     </div>
   );

@@ -4,22 +4,18 @@ import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useWallet } from "@/contexts/WalletContext";
 import { useReferralFromURL } from "@/utils/referral";
-import { Wallet, Coins, Loader2, Shield, Menu } from "lucide-react";
+import { Coins, Shield, Menu } from "lucide-react";
+import { ConnectButton } from '@rainbow-me/rainbowkit';
 
 interface NavbarProps {
   onOpenMobileMenu?: () => void;
 }
 
 const Navbar: React.FC<NavbarProps> = ({ onOpenMobileMenu }) => {
-  const { walletAddress, user, connect, disconnect, isLoading, isConnecting } = useWallet();
+  const { user } = useWallet();
   const location = useLocation();
-  const referralCode = useReferralFromURL();
   const isAdmin = localStorage.getItem("wagcoin_admin") === "true";
   
-  const handleConnect = () => {
-    connect(referralCode);
-  };
-
   return (
     <header className="fixed z-50 w-full bg-black border-b border-gray-800">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
@@ -87,39 +83,15 @@ const Navbar: React.FC<NavbarProps> = ({ onOpenMobileMenu }) => {
             </div>
           )}
 
-          {isLoading ? (
-            <Button variant="outline" disabled className="border-neon-green/50 text-neon-green">
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Loading...
-            </Button>
-          ) : walletAddress ? (
-            <Button
-              variant="outline"
-              className="border-neon-green/50 text-neon-green hover:bg-neon-green/10"
-              onClick={disconnect}
-            >
-              <Wallet className="mr-2 h-4 w-4" />
-              {walletAddress.substring(0, 6)}...{walletAddress.substring(walletAddress.length - 4)}
-            </Button>
-          ) : (
-            <Button
-              onClick={handleConnect}
-              className="bg-neon-green hover:bg-neon-green/90 text-black"
-              disabled={isConnecting}
-            >
-              {isConnecting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
-                  Connecting...
-                </>
-              ) : (
-                <>
-                  <Wallet className="mr-2 h-4 w-4" /> 
-                  Connect Wallet
-                </>
-              )}
-            </Button>
-          )}
+          {/* Rainbow Kit Connect Button */}
+          <ConnectButton 
+            showBalance={false}
+            chainStatus="none"
+            accountStatus={{
+              smallScreen: 'avatar',
+              largeScreen: 'full',
+            }}
+          />
           
           {/* Admin Login Button - only shown if not admin */}
           {!isAdmin && location.pathname !== "/admin-login" && (

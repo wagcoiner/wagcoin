@@ -1,37 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
-declare global {
-  interface Window {
-    ethereum?: any;
-  }
-}
-
-export const connectWallet = async (): Promise<string | null> => {
-  try {
-    if (!window.ethereum) {
-      alert("Please install MetaMask to use this app");
-      return null;
-    }
-
-    const accounts = await window.ethereum.request({
-      method: "eth_requestAccounts",
-    });
-
-    if (accounts.length === 0) {
-      console.log("No accounts found");
-      return null;
-    }
-
-    const walletAddress = accounts[0];
-    console.log("Connected wallet:", walletAddress);
-    return walletAddress;
-  } catch (error) {
-    console.error("Error connecting wallet:", error);
-    return null;
-  }
-};
-
 export const checkAndCreateUser = async (walletAddress: string): Promise<void> => {
   try {
     // Check if user exists
@@ -149,9 +118,4 @@ const generateReferralCode = (): string => {
     result += chars.charAt(Math.floor(Math.random() * chars.length));
   }
   return result;
-};
-
-export const disconnectWallet = (): void => {
-  console.log("Wallet disconnected");
-  // Clear any local wallet state
 };
