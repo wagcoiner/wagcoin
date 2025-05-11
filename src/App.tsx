@@ -17,6 +17,7 @@ import AdminLogin from "@/pages/AdminLogin";
 import Airdrop from "@/pages/Airdrop";
 import NotFound from "@/pages/NotFound";
 
+// Create a client
 const queryClient = new QueryClient();
 
 const App = () => (
