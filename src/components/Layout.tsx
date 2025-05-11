@@ -1,18 +1,25 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
 import { Toaster } from "@/components/ui/toaster";
 import MobileMenu from "./MobileMenu";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useAccount } from "wagmi";
+import { useWallet } from "@/contexts/WalletContext";
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { isConnected } = useAccount();
+  const { walletAddress } = useWallet();
 
   // Log connection status for debugging
-  console.log("Wagmi isConnected:", isConnected);
+  useEffect(() => {
+    console.log("Layout - Connection Status:", { 
+      wagmiIsConnected: isConnected, 
+      walletContextAddress: walletAddress 
+    });
+  }, [isConnected, walletAddress]);
 
   return (
     <div className="min-h-screen flex flex-col bg-black text-white">

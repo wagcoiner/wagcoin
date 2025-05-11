@@ -44,6 +44,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       try {
         setIsLoading(true);
+        setError(null); // Clear any previous errors
         
         // Check if user exists and create if not
         await checkAndCreateUser(walletAddress);
@@ -57,19 +58,27 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         
         if (error) {
           console.error("Error fetching user data:", error);
+          setError("Failed to load user data");
           setUser(null);
         } else {
           setUser(userData as User);
+          setError(null); // Ensure error is cleared on success
         }
       } catch (error) {
         console.error("Error in fetchUserData:", error);
+        setError("An unexpected error occurred");
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchUserData();
-  }, [walletAddress]);
+    if (isConnected) {
+      fetchUserData();
+    } else {
+      setUser(null);
+      setIsLoading(false);
+    }
+  }, [walletAddress, isConnected]);
 
   // Set up real-time subscription to user data
   useEffect(() => {
@@ -111,8 +120,8 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         return;
       }
       
-      // If we're not connected, the ConnectKit UI will handle this
-      // We'll just show a toast that they need to connect
+      // ConnectKit will handle the actual connection through its UI
+      // We'll just show a toast with instructions
       toast({
         title: "Connect Wallet",
         description: "Please use the connect wallet button to connect",
@@ -160,12 +169,24 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const disconnect = () => {
     wagmiDisconnect();
     setUser(null);
+    setError(null); // Clear any errors on disconnect
     
     toast({
       title: "Wallet Disconnected",
       description: "Your wallet has been disconnected",
     });
   };
+
+  // Log connection status to help with debugging
+  useEffect(() => {
+    console.log("WalletContext - Connection Status:", {
+      isConnected,
+      walletAddress,
+      hasUser: !!user,
+      isLoading,
+      error
+    });
+  }, [isConnected, walletAddress, user, isLoading, error]);
 
   return (
     <WalletContext.Provider value={{ 
