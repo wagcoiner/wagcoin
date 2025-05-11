@@ -17,11 +17,11 @@ const connectors = connectorsForWallets([
   {
     groupName: 'Recommended',
     wallets: [
-      injectedWallet({ chains: [mainnet, sepolia] }),
-      metaMaskWallet({ projectId, chains: [mainnet, sepolia] }),
-      coinbaseWallet({ appName: 'WagChain', chains: [mainnet, sepolia] }),
-      walletConnectWallet({ projectId, chains: [mainnet, sepolia] }),
-      braveWallet({ chains: [mainnet, sepolia] })
+      injectedWallet(),
+      metaMaskWallet({ projectId }),
+      coinbaseWallet({ appName: 'WagChain' }),
+      walletConnectWallet({ projectId }),
+      braveWallet()
     ],
   }
 ]);
