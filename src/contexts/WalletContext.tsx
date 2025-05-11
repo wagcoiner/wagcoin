@@ -102,7 +102,6 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       setError(null);
       setIsConnecting(true);
       
-      // We don't need to do anything here as wagmi handles the connection
       // Just display a toast if we're already connected
       if (isConnected && walletAddress) {
         toast({
@@ -112,7 +111,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         return;
       }
       
-      // If we're not connected, the RainbowKit UI will handle this
+      // If we're not connected, the ConnectKit UI will handle this
       // We'll just show a toast that they need to connect
       toast({
         title: "Connect Wallet",

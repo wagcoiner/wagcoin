@@ -13,7 +13,7 @@ import {
   Shield,
   X
 } from "lucide-react";
-import { ConnectButton } from '@rainbow-me/rainbowkit';
+import { ConnectKitButton } from 'connectkit';
 
 interface MobileMenuProps {
   onClose: () => void;
@@ -93,13 +93,9 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ onClose }) => {
       )}
       
       <div className="p-4 border-t border-gray-800">
-        {/* RainbowKit Connect Button */}
+        {/* ConnectKit Button */}
         <div className="flex justify-center">
-          <ConnectButton
-            showBalance={false}
-            chainStatus="icon"
-            accountStatus="address"
-          />
+          <ConnectKitButton />
         </div>
       </div>
     </div>

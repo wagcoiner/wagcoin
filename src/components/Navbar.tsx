@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useWallet } from "@/contexts/WalletContext";
 import { useReferralFromURL } from "@/utils/referral";
 import { Coins, Shield, Menu } from "lucide-react";
-import { ConnectButton } from '@rainbow-me/rainbowkit';
+import { ConnectKitButton } from 'connectkit';
 
 interface NavbarProps {
   onOpenMobileMenu?: () => void;
@@ -83,15 +83,8 @@ const Navbar: React.FC<NavbarProps> = ({ onOpenMobileMenu }) => {
             </div>
           )}
 
-          {/* Rainbow Kit Connect Button */}
-          <ConnectButton 
-            showBalance={false}
-            chainStatus="none"
-            accountStatus={{
-              smallScreen: 'avatar',
-              largeScreen: 'full',
-            }}
-          />
+          {/* ConnectKit Button */}
+          <ConnectKitButton />
           
           {/* Admin Login Button - only shown if not admin */}
           {!isAdmin && location.pathname !== "/admin-login" && (
