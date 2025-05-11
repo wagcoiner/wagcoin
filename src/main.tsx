@@ -7,9 +7,17 @@ import { ConnectKitProvider } from 'connectkit';
 import { wagmiConfig } from './config/wagmi';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-// Create a QueryClient instance
-const queryClient = new QueryClient();
+// Create a QueryClient instance with proper configuration
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
+// Make sure React Query provider is set correctly
 createRoot(document.getElementById("root")!).render(
   <QueryClientProvider client={queryClient}>
     <WagmiConfig config={wagmiConfig}>
