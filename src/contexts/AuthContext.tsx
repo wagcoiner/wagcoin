@@ -2,24 +2,26 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { User, Session } from "@supabase/supabase-js";
+import { User as SupabaseUser, Session } from "@supabase/supabase-js";
 import { useNavigate } from "react-router-dom";
+import { User } from "@/types";
 
 export interface UserProfile {
   id: string;
-  username: string;
+  username?: string;
   balance: number;
   referral_code: string;
   referral_count: number;
   daily_streak: number;
   total_tasks_completed: number;
-  role: 'user' | 'admin';
+  role?: 'user' | 'admin';
   last_login: string;
   created_at: string;
+  wallet_address?: string;
 }
 
 interface AuthContextProps {
-  user: User | null;
+  user: SupabaseUser | null;
   profile: UserProfile | null;
   session: Session | null;
   isLoading: boolean;
@@ -33,7 +35,7 @@ interface AuthContextProps {
 const AuthContext = createContext<AuthContextProps | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<SupabaseUser | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -45,7 +47,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const fetchProfile = async (userId: string) => {
     try {
       const { data, error } = await supabase
-        .from("profiles")
+        .from("users")
         .select("*")
         .eq("id", userId)
         .single();
@@ -97,7 +99,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               
               // Update last login
               await supabase
-                .from("profiles")
+                .from("users")
                 .update({ last_login: new Date().toISOString() })
                 .eq("id", newUser.id);
             }

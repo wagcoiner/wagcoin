@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+
+import React, { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -42,7 +43,7 @@ const AdminUsers: React.FC = () => {
     queryKey: ['admin-users'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("profiles")
+        .from("users")
         .select("*")
         .order("created_at", { ascending: false });
         
@@ -87,7 +88,7 @@ const AdminUsers: React.FC = () => {
       if (authData?.user) {
         // Update the profile
         const { error: updateError } = await supabase
-          .from("profiles")
+          .from("users")
           .update({
             username: newUsername,
             balance: parseInt(newBalance) || 0
@@ -131,7 +132,7 @@ const AdminUsers: React.FC = () => {
     
     try {
       const { error } = await supabase
-        .from("profiles")
+        .from("users")
         .update({
           username: editUsername,
           balance: parseInt(editBalance) || 0,

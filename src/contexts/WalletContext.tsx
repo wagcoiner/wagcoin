@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { User } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,202 +6,151 @@ import { useReferralFromURL, processReferral } from "@/utils/referral";
 import { useAccount, useDisconnect } from "wagmi";
 import { checkAndCreateUser } from "@/utils/wallet";
 
+// Define interface for the wallet context
 interface WalletContextProps {
   walletAddress: string | null;
-  user: User | null;
+  userProfile: User | null;
+  connectWallet: () => Promise<void>;
+  disconnectWallet: () => void;
   isLoading: boolean;
-  isConnecting: boolean;
-  error: string | null;
-  connect: (referralCode?: string | null) => Promise<void>;
-  disconnect: () => void;
 }
 
+// Create context
 const WalletContext = createContext<WalletContextProps | undefined>(undefined);
 
-export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [isConnecting, setIsConnecting] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
+// Provider component
+export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ 
+  children 
+}) => {
+  const [walletAddress, setWalletAddress] = useState<string | null>(null);
+  const [userProfile, setUserProfile] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const { toast } = useToast();
-  
-  // Use wagmi hooks
   const { address, isConnected } = useAccount();
-  const { disconnect: wagmiDisconnect } = useDisconnect();
+  const { disconnect } = useDisconnect();
 
-  // Use the address as walletAddress
-  const walletAddress = address ? address.toLowerCase() : null;
+  // Get referral code from URL
+  const referralCode = useReferralFromURL();
 
-  // Fetch user data when wallet is connected
-  useEffect(() => {
-    const fetchUserData = async () => {
-      if (!walletAddress) {
-        setUser(null);
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        setIsLoading(true);
-        setError(null); // Clear any previous errors
-        
-        // Check if user exists and create if not
-        await checkAndCreateUser(walletAddress);
-        
-        // Fetch user data
-        const { data: userData, error } = await supabase
-          .from("users")
-          .select("*")
-          .eq("wallet_address", walletAddress)
-          .single();
-        
-        if (error) {
-          console.error("Error fetching user data:", error);
-          setError("Failed to load user data");
-          setUser(null);
-        } else {
-          setUser(userData as User);
-          setError(null); // Ensure error is cleared on success
-        }
-      } catch (error) {
-        console.error("Error in fetchUserData:", error);
-        setError("An unexpected error occurred");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    if (isConnected) {
-      fetchUserData();
-    } else {
-      setUser(null);
-      setIsLoading(false);
-    }
-  }, [walletAddress, isConnected]);
-
-  // Set up real-time subscription to user data
-  useEffect(() => {
-    if (!user?.id) return;
-
-    const userSubscription = supabase
-      .channel(`user-${user.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'users',
-          filter: `id=eq.${user.id}`
-        },
-        (payload) => {
-          setUser(payload.new as User);
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(userSubscription);
-    };
-  }, [user?.id]);
-
-  // Connect wallet function
-  const connect = async (referralCode?: string | null): Promise<void> => {
+  // Handle wallet connection
+  const connectWallet = async () => {
     try {
-      setError(null);
-      setIsConnecting(true);
+      setIsLoading(true);
       
-      // Just display a toast if we're already connected
-      if (isConnected && walletAddress) {
+      // Check if already connected by wagmi
+      if (address && isConnected) {
+        setWalletAddress(address);
+        
+        // Check if user exists or create new one
+        await checkAndCreateUser(address);
+        
+        // If there's a referral code, process it
+        if (referralCode) {
+          await processReferral(referralCode, address);
+        }
+        
+        // Load user data
+        await fetchUserData(address);
+
         toast({
-          title: "Wallet Already Connected",
-          description: `Already connected to ${walletAddress.substring(0, 6)}...${walletAddress.substring(walletAddress.length - 4)}`,
+          title: "Wallet Connected",
+          description: `Connected: ${shortenAddress(address)}`,
         });
+        
         return;
       }
       
-      // ConnectKit will handle the actual connection through its UI
-      // We'll just show a toast with instructions
+      // If not connected, show error
       toast({
-        title: "Connect Wallet",
-        description: "Please use the connect wallet button to connect",
+        title: "Connection Error",
+        description: "Please connect wallet using the button above",
+        variant: "destructive",
       });
       
-    } catch (error) {
-      console.error("Failed to connect wallet:", error);
-      setError(error instanceof Error ? error.message : "Failed to connect wallet");
+    } catch (error: any) {
+      console.error("Connection error:", error);
       toast({
-        title: "Connection Failed",
-        description: "Failed to connect your wallet. Please try again.",
+        title: "Connection Error",
+        description: error.message || "Failed to connect wallet",
         variant: "destructive",
       });
     } finally {
-      setIsConnecting(false);
+      setIsLoading(false);
     }
   };
 
-  // Process referral when a new user connects
+  // Disconnect wallet
+  const disconnectWallet = () => {
+    try {
+      disconnect();
+      setWalletAddress(null);
+      setUserProfile(null);
+      toast({
+        title: "Wallet Disconnected",
+        description: "Your wallet has been disconnected",
+      });
+    } catch (error: any) {
+      console.error("Error disconnecting:", error);
+    }
+  };
+
+  // Fetch user data from database
+  const fetchUserData = async (walletAddress: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("users")
+        .select("*")
+        .eq("wallet_address", walletAddress)
+        .single();
+
+      if (error) {
+        console.error("Error fetching user:", error);
+        return;
+      }
+
+      if (data) {
+        setUserProfile(data);
+      }
+    } catch (error) {
+      console.error("Error in fetchUserData:", error);
+    }
+  };
+
+  // Keep wallet connection state in sync with wagmi
   useEffect(() => {
-    const processUserReferral = async () => {
-      if (walletAddress && user) {
-        const urlParams = new URLSearchParams(window.location.search);
-        const refCode = urlParams.get("ref");
-        
-        if (refCode) {
-          // Check if this is a new user (if total_tasks_completed is 0)
-          if (user.total_tasks_completed === 0) {
-            const success = await processReferral(refCode, user.id);
-            if (success) {
-              toast({
-                title: "Referral Bonus",
-                description: "You joined using a referral link! Bonus rewards applied.",
-              });
-            }
-          }
-        }
+    const init = async () => {
+      if (address && isConnected) {
+        setWalletAddress(address);
+        await fetchUserData(address);
+      } else {
+        setWalletAddress(null);
       }
     };
     
-    processUserReferral();
-  }, [walletAddress, user, toast]);
+    init();
+  }, [address, isConnected]);
 
-  // Disconnect function
-  const disconnect = () => {
-    wagmiDisconnect();
-    setUser(null);
-    setError(null); // Clear any errors on disconnect
-    
-    toast({
-      title: "Wallet Disconnected",
-      description: "Your wallet has been disconnected",
-    });
+  // Helper to shorten address for UI
+  const shortenAddress = (address: string) => {
+    return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
   };
 
-  // Log connection status to help with debugging
-  useEffect(() => {
-    console.log("WalletContext - Connection Status:", {
-      isConnected,
-      walletAddress,
-      hasUser: !!user,
-      isLoading,
-      error
-    });
-  }, [isConnected, walletAddress, user, isLoading, error]);
-
   return (
-    <WalletContext.Provider value={{ 
-      walletAddress, 
-      user, 
-      isLoading, 
-      isConnecting, 
-      error, 
-      connect, 
-      disconnect 
-    }}>
+    <WalletContext.Provider
+      value={{
+        walletAddress,
+        userProfile,
+        connectWallet,
+        disconnectWallet,
+        isLoading
+      }}
+    >
       {children}
     </WalletContext.Provider>
   );
 };
 
+// Hook to use wallet context
 export const useWallet = (): WalletContextProps => {
   const context = useContext(WalletContext);
   if (context === undefined) {

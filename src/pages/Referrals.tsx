@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -44,7 +43,7 @@ const Referrals: React.FC = () => {
           const refereeIds = referrals.map(ref => ref.referee_id);
           
           const { data: users, error: usersError } = await supabase
-            .from("profiles")
+            .from("users")
             .select("id, username, created_at")
             .in("id", refereeIds);
 
