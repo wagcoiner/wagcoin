@@ -13,7 +13,7 @@ interface WalletContextProps {
   connectWallet: () => Promise<void>;
   disconnectWallet: () => void;
   isLoading: boolean;
-  user: User | null;
+  user: User | null; // Keep the user property for backward compatibility
   connect: (referralCode?: string | null) => Promise<void>;
 }
 
@@ -153,7 +153,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({
         connectWallet,
         disconnectWallet,
         isLoading,
-        user: userProfile,
+        user: userProfile, // Ensure user is always set to userProfile for backward compatibility
         connect
       }}
     >
