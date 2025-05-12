@@ -41,7 +41,7 @@ const taskFormSchema = z.object({
 type TaskFormValues = z.infer<typeof taskFormSchema>;
 
 const AdminPage: React.FC = () => {
-  const { user } = useWallet();
+  const { userProfile } = useWallet(); // Use userProfile instead of user
   const { toast } = useToast();
   const navigate = useNavigate();
   const isAdmin = localStorage.getItem("wagcoin_admin") === "true";

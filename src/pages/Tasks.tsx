@@ -11,7 +11,7 @@ import { Coins, Award, Check, ExternalLink } from "lucide-react";
 import UserBalance from "@/components/UserBalance";
 
 const Tasks: React.FC = () => {
-  const { user, walletAddress } = useWallet();
+  const { userProfile, walletAddress } = useWallet(); // Use userProfile instead of user
   const [tasks, setTasks] = useState<Task[]>([]);
   const [userTasks, setUserTasks] = useState<UserTask[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -35,11 +35,11 @@ const Tasks: React.FC = () => {
         
         setTasks(typedTasks || []);
 
-        if (user) {
+        if (userProfile) {
           const { data: userTasksData, error: userTasksError } = await supabase
             .from("user_tasks")
             .select("*")
-            .eq("user_id", user.id);
+            .eq("user_id", userProfile.id);
 
           if (userTasksError) throw userTasksError;
           setUserTasks(userTasksData || []);
@@ -75,15 +75,15 @@ const Tasks: React.FC = () => {
 
     // Set up real-time subscription for user tasks if user exists
     let userTasksSubscription = null;
-    if (user?.id) {
+    if (userProfile?.id) {
       userTasksSubscription = supabase
-        .channel(`user-tasks-${user.id}`)
+        .channel(`user-tasks-${userProfile.id}`)
         .on('postgres_changes', 
           {
             event: '*',
             schema: 'public',
             table: 'user_tasks',
-            filter: `user_id=eq.${user.id}`
+            filter: `user_id=eq.${userProfile.id}`
           }, 
           () => {
             fetchTasks();
@@ -98,10 +98,10 @@ const Tasks: React.FC = () => {
         supabase.removeChannel(userTasksSubscription);
       }
     };
-  }, [user?.id, toast]);
+  }, [userProfile?.id, toast]);
 
   const handleCompleteTask = async (task: Task) => {
-    if (!user) {
+    if (!userProfile) {
       toast({
         title: "Not Connected",
         description: "Please connect your wallet first",
@@ -125,7 +125,7 @@ const Tasks: React.FC = () => {
       const { error: insertError } = await supabase
         .from("user_tasks")
         .insert({
-          user_id: user.id,
+          user_id: userProfile.id,
           task_id: task.id,
           reward: task.reward,
         });
@@ -136,10 +136,10 @@ const Tasks: React.FC = () => {
       const { error: updateError } = await supabase
         .from("users")
         .update({ 
-          balance: user.balance + task.reward,
-          total_tasks_completed: user.total_tasks_completed + 1
+          balance: userProfile.balance + task.reward,
+          total_tasks_completed: userProfile.total_tasks_completed + 1
         })
-        .eq("id", user.id);
+        .eq("id", userProfile.id);
 
       if (updateError) throw updateError;
 
@@ -185,7 +185,7 @@ const Tasks: React.FC = () => {
           Each task you complete rewards you with $WAGCoin
         </p>
         
-        {user && (
+        {userProfile && (
           <div className="flex justify-center mt-6">
             <UserBalance size="large" />
           </div>

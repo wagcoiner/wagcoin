@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,12 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 import { Coins, Users, Copy, Award, Loader2, LogIn } from "lucide-react";
 import { Link } from "react-router-dom";
-
-interface ReferredUser {
-  id: string;
-  username: string;
-  created_at: string;
-}
+import { ReferredUser } from "@/types";
 
 const Referrals: React.FC = () => {
   const { user, profile, isLoading } = useAuth();
@@ -44,11 +40,23 @@ const Referrals: React.FC = () => {
           
           const { data: users, error: usersError } = await supabase
             .from("users")
-            .select("id, username, created_at")
+            .select("id, wallet_address, created_at")
             .in("id", refereeIds);
 
           if (usersError) throw usersError;
-          setReferredUsers(users || []);
+          
+          // Convert users to ReferredUser type and handle potentially missing username field
+          const formattedUsers: ReferredUser[] = users?.map(user => ({
+            id: user.id,
+            wallet_address: user.wallet_address,
+            created_at: user.created_at,
+            // Use wallet address as fallback for username
+            username: user.wallet_address ? 
+              `${user.wallet_address.substring(0, 6)}...${user.wallet_address.substring(user.wallet_address.length - 4)}` : 
+              "User"
+          })) || [];
+          
+          setReferredUsers(formattedUsers);
         } else {
           setReferredUsers([]);
         }

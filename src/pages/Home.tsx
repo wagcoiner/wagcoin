@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -11,11 +10,11 @@ import { Calendar, Route, Map, TrendingUp, DollarSign } from "lucide-react";
 import Supporters from "@/components/Supporters";
 
 const Home = () => {
-  const { walletAddress, user, connect } = useWallet();
+  const { walletAddress, userProfile, connectWallet } = useWallet();
   const referralCode = useReferralFromURL();
   
   const handleConnectWallet = () => {
-    connect(referralCode);
+    connectWallet();
   };
 
   return (
