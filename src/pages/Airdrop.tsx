@@ -5,10 +5,10 @@ import { motion } from "framer-motion";
 import { Gift, Zap, Clock, CalendarDays, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { useWallet } from "@/contexts/WalletContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 const AirdropPage = () => {
-  const { walletAddress } = useWallet();
+  const { user } = useAuth();
   
   // Airdrop date: October 15, 2025 00:00 UTC
   const airdropDate = new Date('2025-10-15T00:00:00Z');
@@ -98,16 +98,16 @@ const AirdropPage = () => {
               </div>
               
               <div className="text-center">
-                {walletAddress ? (
-                  <p className="text-neon-green mb-4">Your wallet is connected and ready for the airdrop!</p>
+                {user ? (
+                  <p className="text-neon-green mb-4">Your account is connected and ready for the airdrop!</p>
                 ) : (
-                  <p className="text-yellow-400 mb-4">Connect your wallet to be eligible for the airdrop</p>
+                  <p className="text-yellow-400 mb-4">Sign up or log in to be eligible for the airdrop</p>
                 )}
                 
                 <div className="mt-4 flex justify-center">
-                  {!walletAddress ? (
-                    <Button className="bg-neon-green hover:bg-neon-green/90 text-black">
-                      Connect Wallet
+                  {!user ? (
+                    <Button asChild className="bg-neon-green hover:bg-neon-green/90 text-black">
+                      <Link to="/auth">Sign In / Sign Up</Link>
                     </Button>
                   ) : (
                     <Button asChild className="bg-neon-green hover:bg-neon-green/90 text-black">
