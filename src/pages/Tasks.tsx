@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useWallet } from "@/contexts/WalletContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { Task, UserTask } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
@@ -11,7 +11,7 @@ import { Coins, Award, Check, ExternalLink } from "lucide-react";
 import UserBalance from "@/components/UserBalance";
 
 const Tasks: React.FC = () => {
-  const { userProfile, walletAddress } = useWallet(); // Use userProfile instead of user
+  const { profile, user } = useAuth(); // Use profile and user from AuthContext
   const [tasks, setTasks] = useState<Task[]>([]);
   const [userTasks, setUserTasks] = useState<UserTask[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -35,11 +35,11 @@ const Tasks: React.FC = () => {
         
         setTasks(typedTasks || []);
 
-        if (userProfile) {
+        if (profile) {
           const { data: userTasksData, error: userTasksError } = await supabase
             .from("user_tasks")
             .select("*")
-            .eq("user_id", userProfile.id);
+            .eq("user_id", profile.id);
 
           if (userTasksError) throw userTasksError;
           setUserTasks(userTasksData || []);
@@ -75,15 +75,15 @@ const Tasks: React.FC = () => {
 
     // Set up real-time subscription for user tasks if user exists
     let userTasksSubscription = null;
-    if (userProfile?.id) {
+    if (profile?.id) {
       userTasksSubscription = supabase
-        .channel(`user-tasks-${userProfile.id}`)
+        .channel(`user-tasks-${profile.id}`)
         .on('postgres_changes', 
           {
             event: '*',
             schema: 'public',
             table: 'user_tasks',
-            filter: `user_id=eq.${userProfile.id}`
+            filter: `user_id=eq.${profile.id}`
           }, 
           () => {
             fetchTasks();
@@ -98,13 +98,13 @@ const Tasks: React.FC = () => {
         supabase.removeChannel(userTasksSubscription);
       }
     };
-  }, [userProfile?.id, toast]);
+  }, [profile?.id, toast]);
 
   const handleCompleteTask = async (task: Task) => {
-    if (!userProfile) {
+    if (!profile) {
       toast({
-        title: "Not Connected",
-        description: "Please connect your wallet first",
+        title: "Not Signed In",
+        description: "Please sign in to complete tasks",
         variant: "destructive",
       });
       return;
@@ -125,7 +125,7 @@ const Tasks: React.FC = () => {
       const { error: insertError } = await supabase
         .from("user_tasks")
         .insert({
-          user_id: userProfile.id,
+          user_id: profile.id,
           task_id: task.id,
           reward: task.reward,
         });
@@ -136,10 +136,10 @@ const Tasks: React.FC = () => {
       const { error: updateError } = await supabase
         .from("users")
         .update({ 
-          balance: userProfile.balance + task.reward,
-          total_tasks_completed: userProfile.total_tasks_completed + 1
+          balance: profile.balance + task.reward,
+          total_tasks_completed: profile.total_tasks_completed + 1
         })
-        .eq("id", userProfile.id);
+        .eq("id", profile.id);
 
       if (updateError) throw updateError;
 
@@ -161,13 +161,13 @@ const Tasks: React.FC = () => {
     return userTasks.some(ut => ut.task_id === taskId);
   };
 
-  if (!walletAddress) {
+  if (!user) {
     return (
       <div className="container mx-auto px-4 py-12 flex flex-col items-center justify-center min-h-[60vh] text-center">
         <Award className="h-16 w-16 text-neon-green mb-4" />
-        <h1 className="text-3xl font-bold mb-4">Connect Your Wallet</h1>
+        <h1 className="text-3xl font-bold mb-4">Sign In Required</h1>
         <p className="text-xl text-gray-300 mb-8 max-w-md">
-          Connect your wallet to view and complete tasks to earn $WAGCoin rewards
+          Sign in to view and complete tasks to earn $WAGCoin rewards
         </p>
       </div>
     );
@@ -185,7 +185,7 @@ const Tasks: React.FC = () => {
           Each task you complete rewards you with $WAGCoin
         </p>
         
-        {userProfile && (
+        {profile && (
           <div className="flex justify-center mt-6">
             <UserBalance size="large" />
           </div>

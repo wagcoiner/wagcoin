@@ -4,7 +4,6 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
-import { WalletProvider } from "@/contexts/WalletContext"; // Import WalletProvider
 import Layout from "@/components/Layout";
 import Home from "@/pages/Home";
 import Auth from "@/pages/Auth";
@@ -52,43 +51,41 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
 const AppRoutes = () => {
   return (
     <AuthProvider>
-      <WalletProvider> {/* Add WalletProvider here */}
-        <Layout>
-          <Routes>
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/" element={<Home />} />
-            <Route path="/tasks" element={
-              <ProtectedRoute>
-                <Tasks />
-              </ProtectedRoute>
-            } />
-            <Route path="/referrals" element={
-              <ProtectedRoute>
-                <Referrals />
-              </ProtectedRoute>
-            } />
-            <Route path="/leaderboard" element={<Leaderboard />} />
-            <Route path="/coinomics" element={<Coinomics />} />
-            <Route path="/airdrop" element={
-              <ProtectedRoute>
-                <Airdrop />
-              </ProtectedRoute>
-            } />
-            <Route path="/about" element={<About />} />
-            <Route path="/admin" element={
-              <AdminRoute>
-                <Admin />
-              </AdminRoute>
-            } />
-            <Route path="/admin/users" element={
-              <AdminRoute>
-                <AdminUsers />
-              </AdminRoute>
-            } />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Layout>
-      </WalletProvider> {/* Close WalletProvider */}
+      <Layout>
+        <Routes>
+          <Route path="/auth" element={<Auth />} />
+          <Route path="/" element={<Home />} />
+          <Route path="/tasks" element={
+            <ProtectedRoute>
+              <Tasks />
+            </ProtectedRoute>
+          } />
+          <Route path="/referrals" element={
+            <ProtectedRoute>
+              <Referrals />
+            </ProtectedRoute>
+          } />
+          <Route path="/leaderboard" element={<Leaderboard />} />
+          <Route path="/coinomics" element={<Coinomics />} />
+          <Route path="/airdrop" element={
+            <ProtectedRoute>
+              <Airdrop />
+            </ProtectedRoute>
+          } />
+          <Route path="/about" element={<About />} />
+          <Route path="/admin" element={
+            <AdminRoute>
+              <Admin />
+            </AdminRoute>
+          } />
+          <Route path="/admin/users" element={
+            <AdminRoute>
+              <AdminUsers />
+            </AdminRoute>
+          } />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Layout>
     </AuthProvider>
   );
 };

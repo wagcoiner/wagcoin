@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -45,12 +44,12 @@ const Referrals: React.FC = () => {
 
           if (usersError) throw usersError;
           
-          // Convert users to ReferredUser type and handle potentially missing username field
+          // Convert users to ReferredUser type
           const formattedUsers: ReferredUser[] = users?.map(user => ({
             id: user.id,
             wallet_address: user.wallet_address,
             created_at: user.created_at,
-            // Use wallet address as fallback for username
+            // Use wallet address as identifier if available
             username: user.wallet_address ? 
               `${user.wallet_address.substring(0, 6)}...${user.wallet_address.substring(user.wallet_address.length - 4)}` : 
               "User"

@@ -1,6 +1,6 @@
-import React, { useEffect } from "react";
+import React from "react";
+import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { useWallet } from "@/contexts/WalletContext";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -40,8 +40,8 @@ const taskFormSchema = z.object({
 // Define the type for our form
 type TaskFormValues = z.infer<typeof taskFormSchema>;
 
-const AdminPage: React.FC = () => {
-  const { userProfile } = useWallet(); // Use userProfile instead of user
+const Admin: React.FC = () => {
+  const { user } = useAuth(); // Use user from AuthContext instead of WalletContext
   const { toast } = useToast();
   const navigate = useNavigate();
   const isAdmin = localStorage.getItem("wagcoin_admin") === "true";
@@ -295,4 +295,4 @@ const AdminPage: React.FC = () => {
   );
 };
 
-export default AdminPage;
+export default Admin;

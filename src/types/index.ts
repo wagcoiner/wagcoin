@@ -1,4 +1,3 @@
-
 export interface User {
   id: string;
   wallet_address?: string;
@@ -44,7 +43,7 @@ export interface Referral {
 // Define the ReferredUser interface to fix the error in Referrals.tsx
 export interface ReferredUser {
   id: string;
+  username?: string;
   wallet_address?: string;
   created_at: string;
-  username?: string; // Make this optional since it might not exist in the database
 }
