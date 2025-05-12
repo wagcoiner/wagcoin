@@ -15,7 +15,7 @@ const queryClient = new QueryClient({
   },
 });
 
-// Make sure React Query provider is set correctly
+// Make sure React Query provider is set correctly, no need for WagmiConfig
 createRoot(document.getElementById("root")!).render(
   <QueryClientProvider client={queryClient}>
     <App />
