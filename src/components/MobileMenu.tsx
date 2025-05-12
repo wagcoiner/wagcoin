@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { useWallet } from "@/contexts/WalletContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { 
   Home, 
   CalendarDays, 
@@ -11,9 +11,11 @@ import {
   Coins, 
   FileText, 
   Shield,
-  X
+  X,
+  LogIn,
+  LogOut
 } from "lucide-react";
-import { ConnectKitButton } from 'connectkit';
+import { Button } from "@/components/ui/button";
 
 interface MobileMenuProps {
   onClose: () => void;
@@ -21,8 +23,7 @@ interface MobileMenuProps {
 
 const MobileMenu: React.FC<MobileMenuProps> = ({ onClose }) => {
   const location = useLocation();
-  const { user } = useWallet();
-  const isAdmin = localStorage.getItem("wagcoin_admin") === "true";
+  const { user, profile, signOut, isAdmin } = useAuth();
 
   const menuItems = [
     { path: "/", label: "Home", icon: <Home className="h-5 w-5" /> },
@@ -35,7 +36,10 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ onClose }) => {
   ];
 
   if (isAdmin) {
-    menuItems.push({ path: "/admin", label: "Admin", icon: <Shield className="h-5 w-5" /> });
+    menuItems.push(
+      { path: "/admin", label: "Admin Tasks", icon: <Shield className="h-5 w-5" /> },
+      { path: "/admin/users", label: "Admin Users", icon: <Shield className="h-5 w-5" /> }
+    );
   }
 
   return (
@@ -74,29 +78,49 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ onClose }) => {
         </nav>
       </div>
       
-      {user && (
+      {profile && (
         <div className="p-4 border-t border-gray-800">
           <div className="bg-gray-800 rounded-md p-3 mb-3">
             <div className="flex items-center justify-between mb-2">
               <span className="text-gray-400">Balance:</span>
               <span className="font-medium text-neon-green flex items-center">
                 <Coins className="mr-1 h-4 w-4" />
-                {user.balance} $WAG
+                {profile.balance} $WAG
               </span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-gray-400">Streak:</span>
-              <span className="font-medium text-neon-green">{user.daily_streak} days</span>
+              <span className="font-medium text-neon-green">{profile.daily_streak} days</span>
             </div>
           </div>
         </div>
       )}
       
       <div className="p-4 border-t border-gray-800">
-        {/* ConnectKit Button */}
-        <div className="flex justify-center">
-          <ConnectKitButton />
-        </div>
+        {user ? (
+          <Button 
+            onClick={() => {
+              signOut();
+              onClose();
+            }}
+            variant="outline" 
+            className="w-full border-red-500/30 text-red-400 hover:bg-red-950/30"
+          >
+            <LogOut className="mr-1 h-4 w-4" />
+            Sign Out
+          </Button>
+        ) : (
+          <Button 
+            asChild
+            variant="default"
+            className="w-full bg-neon-green hover:bg-neon-green/90 text-black"
+          >
+            <Link to="/auth" onClick={onClose}>
+              <LogIn className="mr-1 h-4 w-4" />
+              Sign In
+            </Link>
+          </Button>
+        )}
       </div>
     </div>
   );

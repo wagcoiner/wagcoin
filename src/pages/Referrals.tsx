@@ -1,38 +1,37 @@
 
 import React, { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
-import { useWallet } from "@/contexts/WalletContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
-import { Coins, Users, Copy, Award, Loader2 } from "lucide-react";
+import { Coins, Users, Copy, Award, Loader2, LogIn } from "lucide-react";
+import { Link } from "react-router-dom";
 
 interface ReferredUser {
   id: string;
-  wallet_address: string;
+  username: string;
   created_at: string;
 }
 
 const Referrals: React.FC = () => {
-  const { user, walletAddress, isLoading: isWalletLoading } = useWallet();
+  const { user, profile, isLoading } = useAuth();
   const [referredUsers, setReferredUsers] = useState<ReferredUser[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingReferrals, setIsLoadingReferrals] = useState(true);
   const [copyingLink, setCopyingLink] = useState(false);
   const [copyingCode, setCopyingCode] = useState(false);
   const { toast } = useToast();
-  const location = useLocation();
 
   useEffect(() => {
     const fetchReferredUsers = async () => {
       if (!user?.id) {
-        setIsLoading(false);
+        setIsLoadingReferrals(false);
         return;
       }
 
       try {
-        setIsLoading(true);
+        setIsLoadingReferrals(true);
         
         const { data: referrals, error } = await supabase
           .from("referrals")
@@ -45,8 +44,8 @@ const Referrals: React.FC = () => {
           const refereeIds = referrals.map(ref => ref.referee_id);
           
           const { data: users, error: usersError } = await supabase
-            .from("users")
-            .select("id, wallet_address, created_at")
+            .from("profiles")
+            .select("id, username, created_at")
             .in("id", refereeIds);
 
           if (usersError) throw usersError;
@@ -62,39 +61,19 @@ const Referrals: React.FC = () => {
           variant: "destructive",
         });
       } finally {
-        setIsLoading(false);
+        setIsLoadingReferrals(false);
       }
     };
 
     fetchReferredUsers();
-
-    // Set up real-time subscription for referrals
-    const referralsSubscription = supabase
-      .channel(`referrals-${user?.id}`)
-      .on('postgres_changes', 
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'referrals',
-          filter: `referrer_id=eq.${user?.id}`
-        }, 
-        () => {
-          fetchReferredUsers();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(referralsSubscription);
-    };
-  }, [user?.id]);
+  }, [user?.id, toast]);
 
   const handleCopyReferralLink = () => {
-    if (!user?.referral_code) return;
+    if (!profile?.referral_code) return;
 
     setCopyingLink(true);
     const baseUrl = window.location.origin;
-    const referralLink = `${baseUrl}/?ref=${user.referral_code}`;
+    const referralLink = `${baseUrl}/auth?ref=${profile.referral_code}`;
     
     navigator.clipboard.writeText(referralLink).then(
       () => {
@@ -117,10 +96,10 @@ const Referrals: React.FC = () => {
   };
 
   const handleCopyReferralCode = () => {
-    if (!user?.referral_code) return;
+    if (!profile?.referral_code) return;
     
     setCopyingCode(true);
-    navigator.clipboard.writeText(user.referral_code).then(
+    navigator.clipboard.writeText(profile.referral_code).then(
       () => {
         toast({
           title: "Copied!",
@@ -140,7 +119,7 @@ const Referrals: React.FC = () => {
     );
   };
 
-  if (isWalletLoading) {
+  if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-12 flex flex-col items-center justify-center min-h-[60vh] text-center">
         <Loader2 className="h-16 w-16 text-neon-green mb-4 animate-spin" />
@@ -149,14 +128,20 @@ const Referrals: React.FC = () => {
     );
   }
 
-  if (!walletAddress) {
+  if (!user) {
     return (
       <div className="container mx-auto px-4 py-12 flex flex-col items-center justify-center min-h-[60vh] text-center">
         <Users className="h-16 w-16 text-neon-green mb-4" />
-        <h1 className="text-3xl font-bold mb-4">Connect Your Wallet</h1>
+        <h1 className="text-3xl font-bold mb-4">Sign In Required</h1>
         <p className="text-xl text-gray-300 mb-8 max-w-md">
-          Connect your wallet to access your referral program and start earning rewards
+          Sign in to access your referral program and start earning rewards
         </p>
+        <Button asChild variant="default" className="bg-neon-green hover:bg-neon-green/90 text-black">
+          <Link to="/auth">
+            <LogIn className="h-5 w-5 mr-2" />
+            Sign In
+          </Link>
+        </Button>
       </div>
     );
   }
@@ -182,11 +167,11 @@ const Referrals: React.FC = () => {
                 <CardTitle className="text-2xl">Your Referral Link</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
-                {user ? (
+                {profile && (
                   <>
                     <div className="relative">
                       <div className="bg-black/50 rounded-lg border border-neon-green/30 p-4 pr-12 break-all">
-                        {window.location.origin}/?ref={user.referral_code}
+                        {window.location.origin}/auth?ref={profile.referral_code}
                       </div>
                       <Button 
                         size="icon" 
@@ -208,7 +193,7 @@ const Referrals: React.FC = () => {
                         <p className="text-sm text-gray-400 mb-1">Your Referral Code</p>
                         <div className="flex items-center justify-center gap-2">
                           <p className="text-xl font-mono font-bold text-neon-green tracking-wider">
-                            {user.referral_code}
+                            {profile.referral_code}
                           </p>
                           <Button 
                             size="icon" 
@@ -229,7 +214,7 @@ const Referrals: React.FC = () => {
                       <div className="bg-black/50 rounded-lg border border-neon-green/30 p-3 flex-1 text-center">
                         <p className="text-sm text-gray-400 mb-1">Total Referrals</p>
                         <p className="text-xl font-bold text-neon-green">
-                          {user.referral_count}
+                          {profile.referral_count}
                         </p>
                       </div>
 
@@ -237,7 +222,7 @@ const Referrals: React.FC = () => {
                         <p className="text-sm text-gray-400 mb-1">Total Earned</p>
                         <p className="text-xl font-bold text-neon-green flex items-center justify-center">
                           <Coins className="h-4 w-4 mr-1" />
-                          {user.referral_count * 50}
+                          {profile.referral_count * 50}
                         </p>
                       </div>
                     </div>
@@ -246,16 +231,12 @@ const Referrals: React.FC = () => {
                       <h3 className="font-semibold text-lg text-neon-green mb-2">How it works</h3>
                       <ol className="space-y-2 text-gray-300 list-decimal pl-5">
                         <li>Share your referral link with friends</li>
-                        <li>When they connect their wallet through your link, you both earn rewards</li>
+                        <li>When they sign up through your link, you both earn rewards</li>
                         <li>You get 50 $WAGCoin for each new user who joins</li>
                         <li>There's no limit to how many friends you can refer!</li>
                       </ol>
                     </div>
                   </>
-                ) : (
-                  <div className="flex justify-center items-center py-10">
-                    <Loader2 className="h-8 w-8 text-neon-green animate-spin" />
-                  </div>
                 )}
               </CardContent>
             </Card>
@@ -275,7 +256,7 @@ const Referrals: React.FC = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {isLoading ? (
+              {isLoadingReferrals ? (
                 <div className="flex justify-center items-center py-10">
                   <Loader2 className="h-8 w-8 text-neon-green animate-spin" />
                 </div>
@@ -292,8 +273,7 @@ const Referrals: React.FC = () => {
                         </div>
                         <div>
                           <p className="text-sm font-medium">
-                            {referredUser.wallet_address.substring(0, 6)}...
-                            {referredUser.wallet_address.substring(referredUser.wallet_address.length - 4)}
+                            {referredUser.username || "User"}
                           </p>
                           <p className="text-xs text-gray-400">
                             {new Date(referredUser.created_at).toLocaleDateString()}

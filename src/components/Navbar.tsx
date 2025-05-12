@@ -2,19 +2,17 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { useWallet } from "@/contexts/WalletContext";
-import { useReferralFromURL } from "@/utils/referral";
-import { Coins, Shield, Menu } from "lucide-react";
-import { ConnectKitButton } from 'connectkit';
+import { useAuth } from "@/contexts/AuthContext";
+import { Coins, Shield, Menu, LogOut, LogIn } from "lucide-react";
+import UserBalance from "./UserBalance";
 
 interface NavbarProps {
   onOpenMobileMenu?: () => void;
 }
 
 const Navbar: React.FC<NavbarProps> = ({ onOpenMobileMenu }) => {
-  const { user } = useWallet();
+  const { user, profile, signOut, isAdmin } = useAuth();
   const location = useLocation();
-  const isAdmin = localStorage.getItem("wagcoin_admin") === "true";
   
   return (
     <header className="fixed z-50 w-full bg-black border-b border-gray-800">
@@ -59,44 +57,60 @@ const Navbar: React.FC<NavbarProps> = ({ onOpenMobileMenu }) => {
             </Link>
           ))}
           
-          {/* Admin link - only shown if admin is logged in */}
+          {/* Admin links - only shown if user is admin */}
           {isAdmin && (
-            <Link
-              to="/admin"
-              className={`px-4 py-2 rounded-md transition-colors flex items-center ${
-                location.pathname === "/admin"
-                  ? "text-neon-green bg-neon-green/10"
-                  : "text-gray-300 hover:text-neon-green hover:bg-black/20"
-              }`}
-            >
-              <Shield className="mr-1 h-4 w-4" />
-              Admin
-            </Link>
+            <>
+              <Link
+                to="/admin"
+                className={`px-4 py-2 rounded-md transition-colors flex items-center ${
+                  location.pathname === "/admin"
+                    ? "text-neon-green bg-neon-green/10"
+                    : "text-gray-300 hover:text-neon-green hover:bg-black/20"
+                }`}
+              >
+                <Shield className="mr-1 h-4 w-4" />
+                Tasks
+              </Link>
+              <Link
+                to="/admin/users"
+                className={`px-4 py-2 rounded-md transition-colors flex items-center ${
+                  location.pathname === "/admin/users"
+                    ? "text-neon-green bg-neon-green/10"
+                    : "text-gray-300 hover:text-neon-green hover:bg-black/20"
+                }`}
+              >
+                <Shield className="mr-1 h-4 w-4" />
+                Users
+              </Link>
+            </>
           )}
         </div>
         
         <div className="flex items-center gap-4">
-          {user && (
-            <div className="hidden sm:flex items-center gap-1 px-3 py-1.5 rounded-full bg-gray-900 border border-neon-green/20">
-              <Coins className="text-neon-green h-4 w-4" />
-              <span className="text-neon-green font-medium">{user.balance}</span>
-            </div>
+          {profile && (
+            <UserBalance size="small" showStreak={false} />
           )}
 
-          {/* ConnectKit Button */}
-          <ConnectKitButton />
-          
-          {/* Admin Login Button - only shown if not admin */}
-          {!isAdmin && location.pathname !== "/admin-login" && (
-            <Button
-              variant="ghost"
+          {user ? (
+            <Button 
+              onClick={() => signOut()}
+              variant="outline" 
               size="sm"
-              className="text-gray-400 hover:text-gray-300"
-              asChild
+              className="border-red-500/30 text-red-400 hover:bg-red-950/30"
             >
-              <Link to="/admin-login">
-                <Shield className="h-4 w-4 mr-1" />
-                Admin
+              <LogOut className="mr-1 h-4 w-4" />
+              Sign Out
+            </Button>
+          ) : (
+            <Button 
+              asChild
+              variant="default"
+              size="sm"
+              className="bg-neon-green hover:bg-neon-green/90 text-black"
+            >
+              <Link to="/auth">
+                <LogIn className="mr-1 h-4 w-4" />
+                Sign In
               </Link>
             </Button>
           )}

@@ -1,6 +1,6 @@
 
 import React from "react";
-import { useWallet } from "@/contexts/WalletContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { Coins, Award } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -15,9 +15,9 @@ const UserBalance: React.FC<UserBalanceProps> = ({
   size = "medium", 
   className = "" 
 }) => {
-  const { user } = useWallet();
+  const { profile } = useAuth();
   
-  if (!user) return null;
+  if (!profile) return null;
 
   const sizeStyles = {
     small: {
@@ -47,13 +47,13 @@ const UserBalance: React.FC<UserBalanceProps> = ({
         <div className="flex items-center gap-1.5">
           <Coins className={`text-neon-green ${sizeStyles[size].iconSize}`} />
           <motion.span
-            key={user.balance}
+            key={profile.balance}
             initial={{ scale: 1.2 }}
             animate={{ scale: 1 }}
             transition={{ duration: 0.2 }}
             className={`font-medium text-neon-green ${sizeStyles[size].textSize}`}
           >
-            {user.balance} $WAG
+            {profile.balance} $WAG
           </motion.span>
         </div>
         
@@ -63,7 +63,7 @@ const UserBalance: React.FC<UserBalanceProps> = ({
             <div className="flex items-center gap-1.5">
               <Award className={`text-neon-green ${sizeStyles[size].iconSize}`} />
               <span className={`font-medium text-neon-green ${sizeStyles[size].textSize}`}>
-                {user.daily_streak} days
+                {profile.daily_streak} days
               </span>
             </div>
           </>
