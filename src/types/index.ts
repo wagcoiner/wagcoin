@@ -1,7 +1,7 @@
 
 export interface User {
   id: string;
-  wallet_address: string;
+  wallet_address?: string;
   balance: number;
   referral_code: string;
   referral_count: number;
@@ -9,6 +9,8 @@ export interface User {
   total_tasks_completed: number;
   created_at: string;
   last_login: string;
+  username?: string;
+  role?: 'user' | 'admin';
 }
 
 export interface Task {

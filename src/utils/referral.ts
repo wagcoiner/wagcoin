@@ -27,9 +27,11 @@ export const useReferralFromURL = (): string | null => {
 export const processReferral = async (referralCode: string, userId: string): Promise<boolean> => {
   try {
     // Call the Supabase function to process the referral
-    const { data, error } = await supabase.rpc('process_referral', {
-      ref_code: referralCode,
-      new_user_id: userId
+    const { data, error } = await supabase.functions.invoke('process_referral', {
+      body: { 
+        ref_code: referralCode,
+        new_user_id: userId
+      }
     });
 
     if (error) {
