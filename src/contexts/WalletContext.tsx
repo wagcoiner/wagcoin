@@ -1,9 +1,8 @@
-
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { User } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { processReferral } from "@/utils/referral";
+import { useReferralFromURL } from "@/utils/referral";
 import { useAccount, useDisconnect } from "wagmi";
 import { checkAndCreateUser } from "@/utils/wallet";
 
