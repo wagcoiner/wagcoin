@@ -237,11 +237,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       
       // Update referrer's referral count and balance
+      // Fix: Use direct value updates rather than rpc calls
+      const { data: currentUserData, error: fetchError } = await supabase
+        .from("users")
+        .select("referral_count, balance")
+        .eq("id", referrerId)
+        .single();
+
+      if (fetchError) {
+        console.error("Error fetching user data:", fetchError);
+        return false;
+      }
+
       const { error: updateError } = await supabase
         .from("users")
         .update({ 
-          referral_count: supabase.rpc('increment', { arg: 1 }),
-          balance: supabase.rpc('increment', { arg: 50 })
+          referral_count: (currentUserData?.referral_count || 0) + 1,
+          balance: (currentUserData?.balance || 0) + 50
         })
         .eq("id", referrerId);
         
