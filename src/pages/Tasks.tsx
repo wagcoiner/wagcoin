@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Task, UserTask } from "@/types";
@@ -11,7 +12,7 @@ import { Coins, Award, Check, ExternalLink } from "lucide-react";
 import UserBalance from "@/components/UserBalance";
 
 const Tasks: React.FC = () => {
-  const { profile, user } = useAuth(); // Use profile and user from AuthContext
+  const { profile, user, refreshProfile } = useAuth(); // Add refreshProfile
   const [tasks, setTasks] = useState<Task[]>([]);
   const [userTasks, setUserTasks] = useState<UserTask[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -35,11 +36,12 @@ const Tasks: React.FC = () => {
         
         setTasks(typedTasks || []);
 
-        if (profile) {
+        // Only fetch user tasks if user is logged in
+        if (user?.id) {
           const { data: userTasksData, error: userTasksError } = await supabase
             .from("user_tasks")
             .select("*")
-            .eq("user_id", profile.id);
+            .eq("user_id", user.id);
 
           if (userTasksError) throw userTasksError;
           setUserTasks(userTasksData || []);
@@ -75,15 +77,15 @@ const Tasks: React.FC = () => {
 
     // Set up real-time subscription for user tasks if user exists
     let userTasksSubscription = null;
-    if (profile?.id) {
+    if (user?.id) {
       userTasksSubscription = supabase
-        .channel(`user-tasks-${profile.id}`)
+        .channel(`user-tasks-${user.id}`)
         .on('postgres_changes', 
           {
             event: '*',
             schema: 'public',
             table: 'user_tasks',
-            filter: `user_id=eq.${profile.id}`
+            filter: `user_id=eq.${user.id}`
           }, 
           () => {
             fetchTasks();
@@ -98,10 +100,10 @@ const Tasks: React.FC = () => {
         supabase.removeChannel(userTasksSubscription);
       }
     };
-  }, [profile?.id, toast]);
+  }, [user?.id, toast]);
 
   const handleCompleteTask = async (task: Task) => {
-    if (!profile) {
+    if (!user) {
       toast({
         title: "Not Signed In",
         description: "Please sign in to complete tasks",
@@ -125,23 +127,26 @@ const Tasks: React.FC = () => {
       const { error: insertError } = await supabase
         .from("user_tasks")
         .insert({
-          user_id: profile.id,
+          user_id: user.id,
           task_id: task.id,
           reward: task.reward,
         });
 
       if (insertError) throw insertError;
 
-      // Update user balance
+      // Update user balance - we now use the user ID directly
       const { error: updateError } = await supabase
         .from("users")
         .update({ 
-          balance: profile.balance + task.reward,
-          total_tasks_completed: profile.total_tasks_completed + 1
+          balance: (profile?.balance || 0) + task.reward,
+          total_tasks_completed: (profile?.total_tasks_completed || 0) + 1
         })
-        .eq("id", profile.id);
+        .eq("id", user.id);
 
       if (updateError) throw updateError;
+
+      // Refresh profile data to update the balance display
+      await refreshProfile();
 
       toast({
         title: "Task Completed!",
@@ -161,6 +166,16 @@ const Tasks: React.FC = () => {
     return userTasks.some(ut => ut.task_id === taskId);
   };
 
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-12 flex flex-col items-center justify-center min-h-[60vh] text-center">
+        <div className="animate-spin h-12 w-12 border-4 border-neon-green border-t-transparent rounded-full mb-4"></div>
+        <p className="text-xl">Loading tasks...</p>
+      </div>
+    );
+  }
+
+  // We only check if user is not logged in, not profile
   if (!user) {
     return (
       <div className="container mx-auto px-4 py-12 flex flex-col items-center justify-center min-h-[60vh] text-center">
@@ -185,7 +200,7 @@ const Tasks: React.FC = () => {
           Each task you complete rewards you with $WAGCoin
         </p>
         
-        {profile && (
+        {user && (
           <div className="flex justify-center mt-6">
             <UserBalance size="large" />
           </div>

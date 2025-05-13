@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,6 +9,7 @@ import { motion } from "framer-motion";
 import { Coins, Users, Copy, Award, Loader2, LogIn } from "lucide-react";
 import { Link } from "react-router-dom";
 import { ReferredUser } from "@/types";
+import UserBalance from "@/components/UserBalance";
 
 const Referrals: React.FC = () => {
   const { user, profile, isLoading } = useAuth();
@@ -154,11 +156,17 @@ const Referrals: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4 py-12">
-      <div className="mb-12 text-center">
+      <div className="mb-8 text-center">
         <h1 className="text-4xl font-bold mb-2">Refer Friends & Earn $WAGCoin</h1>
-        <p className="text-xl text-gray-300">
+        <p className="text-xl text-gray-300 mb-6">
           Share your referral code and earn 50 $WAGCoin for each new user that joins
         </p>
+        
+        {profile && (
+          <div className="flex justify-center">
+            <UserBalance size="large" />
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

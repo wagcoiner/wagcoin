@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -68,15 +67,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const refreshProfile = async () => {
     if (!user?.id) return;
     
-    setIsLoading(true);
     const profileData = await fetchProfile(user.id);
     
     if (profileData) {
       setProfile(profileData);
       setIsAdmin(profileData.role === 'admin');
     }
-    
-    setIsLoading(false);
   };
 
   // Set up auth state listener
