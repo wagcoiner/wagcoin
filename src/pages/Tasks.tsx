@@ -8,11 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
-import { Coins, Award, Check, ExternalLink } from "lucide-react";
+import { Coins, Award, Check, ExternalLink, CheckCircle, Clock } from "lucide-react";
 import UserBalance from "@/components/UserBalance";
+import TaskGrid from "@/components/tasks/TaskGrid";
+import BalanceCards from "@/components/tasks/BalanceCards";
 
 const Tasks: React.FC = () => {
-  const { profile, user, refreshProfile } = useAuth(); // Add refreshProfile
+  const { profile, user, refreshProfile } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [userTasks, setUserTasks] = useState<UserTask[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -89,6 +91,8 @@ const Tasks: React.FC = () => {
           }, 
           () => {
             fetchTasks();
+            // Refresh user profile to update balance
+            refreshProfile();
           }
         )
         .subscribe();
@@ -100,7 +104,7 @@ const Tasks: React.FC = () => {
         supabase.removeChannel(userTasksSubscription);
       }
     };
-  }, [user?.id, toast]);
+  }, [user?.id, toast, refreshProfile]);
 
   const handleCompleteTask = async (task: Task) => {
     if (!user) {
@@ -113,6 +117,10 @@ const Tasks: React.FC = () => {
     }
 
     try {
+      // Debug log to check user ID
+      console.log("Current user ID:", user.id);
+      console.log("Current task ID:", task.id);
+      
       // Check if task is already completed
       const isCompleted = userTasks.some(ut => ut.task_id === task.id);
       if (isCompleted) {
@@ -123,30 +131,59 @@ const Tasks: React.FC = () => {
         return;
       }
 
-      // Insert user task record
-      const { error: insertError } = await supabase
+      // Insert user task record with detailed logging
+      console.log("Attempting to insert user_task with:", {
+        user_id: user.id,
+        task_id: task.id,
+        reward: task.reward
+      });
+      
+      const { data: insertData, error: insertError } = await supabase
         .from("user_tasks")
         .insert({
           user_id: user.id,
           task_id: task.id,
           reward: task.reward,
-        });
+        })
+        .select();
 
-      if (insertError) throw insertError;
+      if (insertError) {
+        console.error("Insert error details:", insertError);
+        throw insertError;
+      }
+      
+      console.log("Insert successful:", insertData);
 
-      // Update user balance - we now use the user ID directly
+      // Update user balance
+      const currentBalance = profile?.balance || 0;
+      const newBalance = currentBalance + task.reward;
+      
+      console.log("Updating user balance from", currentBalance, "to", newBalance);
+      
       const { error: updateError } = await supabase
         .from("users")
         .update({ 
-          balance: (profile?.balance || 0) + task.reward,
+          balance: newBalance,
           total_tasks_completed: (profile?.total_tasks_completed || 0) + 1
         })
         .eq("id", user.id);
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error("Update error details:", updateError);
+        throw updateError;
+      }
 
       // Refresh profile data to update the balance display
       await refreshProfile();
+
+      // Add task to local state to avoid refetch
+      setUserTasks(prev => [...prev, {
+        id: insertData?.[0]?.id || 'temp-id-' + Date.now(),
+        user_id: user.id,
+        task_id: task.id,
+        reward: task.reward,
+        completed_at: new Date().toISOString()
+      }]);
 
       toast({
         title: "Task Completed!",
@@ -194,24 +231,22 @@ const Tasks: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4 py-12">
-      <div className="mb-12 text-center">
+      <div className="mb-10 text-center">
         <h1 className="text-4xl font-bold mb-2">Complete Tasks, Earn $WAGCoin</h1>
-        <p className="text-xl text-gray-300">
+        <p className="text-xl text-gray-300 mb-8">
           Each task you complete rewards you with $WAGCoin
         </p>
-        
-        {user && (
-          <div className="flex justify-center mt-6">
-            <UserBalance size="large" />
-          </div>
-        )}
       </div>
 
-      <Tabs defaultValue="daily" className="w-full">
+      {user && profile && (
+        <BalanceCards profile={profile} />
+      )}
+
+      <Tabs defaultValue="daily" className="w-full mt-12">
         <TabsList className="grid grid-cols-3 max-w-md mx-auto mb-8">
           <TabsTrigger value="daily">Daily Tasks</TabsTrigger>
           <TabsTrigger value="weekly">Weekly Tasks</TabsTrigger>
-          <TabsTrigger value="completed">Completed</TabsTrigger>
+          <TabsTrigger value="completed">Completed ({completedTasks.length})</TabsTrigger>
         </TabsList>
 
         <TabsContent value="daily">
@@ -227,117 +262,6 @@ const Tasks: React.FC = () => {
         </TabsContent>
       </Tabs>
     </div>
-  );
-};
-
-const TaskGrid: React.FC<{ 
-  tasks: Task[]; 
-  onCompleteTask: (task: Task) => void;
-  isTaskCompleted: (taskId: string) => boolean;
-}> = ({ tasks, onCompleteTask, isTaskCompleted }) => {
-  if (tasks.length === 0) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-gray-400">No tasks available in this category</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {tasks.map((task, index) => (
-        <TaskCard 
-          key={task.id} 
-          task={task} 
-          index={index}
-          onCompleteTask={onCompleteTask} 
-          completed={isTaskCompleted(task.id)}
-        />
-      ))}
-    </div>
-  );
-};
-
-const TaskCard: React.FC<{ 
-  task: Task; 
-  index: number;
-  onCompleteTask: (task: Task) => void;
-  completed: boolean;
-}> = ({ task, index, onCompleteTask, completed }) => {
-  const difficultyColor = {
-    easy: "text-green-400",
-    medium: "text-yellow-400",
-    hard: "text-red-400"
-  };
-
-  const difficultyBg = {
-    easy: "bg-green-400/10",
-    medium: "bg-yellow-400/10", 
-    hard: "bg-red-400/10"
-  };
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay: index * 0.1 }}
-    >
-      <Card className="border-neon-green/20 bg-gray-900 hover:bg-gray-800 transition-colors overflow-hidden">
-        <CardHeader className="pb-3">
-          <div className="flex justify-between">
-            <div>
-              <CardTitle className="text-neon-green">{task.title}</CardTitle>
-              <CardDescription className="mt-1">{task.description}</CardDescription>
-            </div>
-            <div className={`px-2 py-1 rounded-md text-xs font-medium ${difficultyBg[task.difficulty as keyof typeof difficultyBg]}`}>
-              <span className={difficultyColor[task.difficulty as keyof typeof difficultyColor]}>
-                {task.difficulty.charAt(0).toUpperCase() + task.difficulty.slice(1)}
-              </span>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-1.5">
-              <Coins className="h-5 w-5 text-neon-green" />
-              <span className="font-bold text-neon-green">{task.reward} $WAGCoin</span>
-            </div>
-            <div className="text-sm text-gray-400">
-              {task.type === "daily" ? "Daily Task" : "Weekly Task"}
-            </div>
-          </div>
-          
-          {task.url && (
-            <div className="mt-3">
-              <a 
-                href={task.url} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-sm flex items-center gap-1.5 text-blue-400 hover:text-blue-300"
-              >
-                <ExternalLink className="h-3.5 w-3.5" />
-                Visit task link
-              </a>
-            </div>
-          )}
-        </CardContent>
-        <CardFooter className="pt-0">
-          <Button
-            onClick={() => !completed && onCompleteTask(task)}
-            disabled={completed}
-            className={completed ? "bg-gray-700 w-full" : "bg-neon-green hover:bg-neon-green/90 text-black w-full"}
-          >
-            {completed ? (
-              <>
-                <Check className="mr-2 h-4 w-4" /> Completed
-              </>
-            ) : (
-              "Complete Task"
-            )}
-          </Button>
-        </CardFooter>
-      </Card>
-    </motion.div>
   );
 };
 
