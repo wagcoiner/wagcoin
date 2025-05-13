@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -273,7 +272,7 @@ const Home: React.FC = () => {
           
           {/* Timeline items */}
           <div className="space-y-12">
-            {/* Q2 2025 */}
+            {/* Q4 2025 */}
             <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -281,14 +280,16 @@ const Home: React.FC = () => {
               className="flex flex-col md:flex-row items-start relative"
             >
               <div className="md:w-1/2 md:pr-12 md:text-right order-2 md:order-1 mt-6 md:mt-0">
-                <h3 className="text-xl text-neon-green font-bold mb-2">Q2 2025</h3>
+                <h3 className="text-xl text-neon-green font-bold mb-2">Q4 2025 — CEX Listings & Scale</h3>
                 <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
-                  <h4 className="font-bold mb-2">Expansion & Growth</h4>
+                  <h4 className="font-bold mb-2">Exchange Listings & Growth</h4>
                   <ul className="text-gray-400 list-disc list-inside text-left ml-2 space-y-2">
-                    <li>Major exchange listings</li>
-                    <li>Mobile app launch</li>
-                    <li>WagChain DAO implementation</li>
-                    <li>Cross-chain bridge deployment</li>
+                    <li>Major Airdrop Launch on Oct 15</li>
+                    <li>Listing on Tier 3 Centralized Exchange (CEX)</li>
+                    <li>Application to CoinMarketCap & CoinGecko</li>
+                    <li>Launch $WAG Staking for supporters</li>
+                    <li>Mobile optimization and task notifications</li>
+                    <li>Roadmap 2026 announcement</li>
                   </ul>
                 </div>
               </div>
@@ -298,7 +299,7 @@ const Home: React.FC = () => {
               <div className="md:w-1/2 order-1 md:order-2"></div>
             </motion.div>
             
-            {/* Q1 2025 */}
+            {/* Q3 2025 */}
             <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -310,20 +311,23 @@ const Home: React.FC = () => {
                 <CalendarDays className="h-4 w-4 text-black" />
               </div>
               <div className="md:w-1/2 md:pl-12 order-1 md:order-2 mt-6 md:mt-0">
-                <h3 className="text-xl text-neon-green font-bold mb-2">Q1 2025</h3>
+                <h3 className="text-xl text-neon-green font-bold mb-2">Q3 2025 — Ecosystem Expansion</h3>
                 <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
-                  <h4 className="font-bold mb-2">Platform Enhancement</h4>
+                  <h4 className="font-bold mb-2">Platform Growth</h4>
                   <ul className="text-gray-400 list-disc list-inside text-left ml-2 space-y-2">
-                    <li>Task marketplace launch</li>
-                    <li>NFT rewards integration</li>
-                    <li>Advanced referral tiers</li>
-                    <li>Strategic partnerships</li>
+                    <li>Launch of Airdrop Campaign (Countdown to October 15)</li>
+                    <li>Upgrade to Task System v2 with filters and improvements</li>
+                    <li>Launch of NFT Mascot Passes (Pup Cards)</li>
+                    <li>Leaderboard, streaks, and referral bonus structure</li>
+                    <li>Community contests & mini-quests</li>
+                    <li>Begin audits and security reviews</li>
+                    <li>Expand to meme-centric dApps & games (mini wag arcade)</li>
                   </ul>
                 </div>
               </div>
             </motion.div>
             
-            {/* Q4 2024 */}
+            {/* Q2 2025 */}
             <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -331,14 +335,42 @@ const Home: React.FC = () => {
               className="flex flex-col md:flex-row items-start relative"
             >
               <div className="md:w-1/2 md:pr-12 md:text-right order-2 md:order-1 mt-6 md:mt-0">
-                <h3 className="text-xl text-neon-green font-bold mb-2">Q4 2024</h3>
+                <h3 className="text-xl text-neon-green font-bold mb-2">Q2 2025 — Launch & Community Formation</h3>
                 <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
-                  <h4 className="font-bold mb-2">Ecosystem Building</h4>
+                  <h4 className="font-bold mb-2">Initial Release</h4>
                   <ul className="text-gray-400 list-disc list-inside text-left ml-2 space-y-2">
-                    <li>$WAG staking program</li>
-                    <li>Community governance launch</li>
-                    <li>Developer APIs and SDK</li>
-                    <li>Initial exchange listings</li>
+                    <li className="flex items-start">
+                      <CheckCircle className="h-4 w-4 text-neon-green mt-1 mr-2 flex-shrink-0" />
+                      <span>Project concept finalized: Meme + TaskFi ecosystem</span>
+                    </li>
+                    <li className="flex items-start">
+                      <CheckCircle className="h-4 w-4 text-neon-green mt-1 mr-2 flex-shrink-0" />
+                      <span>Launch of WagChain brand (Logo, Dog Mascot, Theme)</span>
+                    </li>
+                    <li className="flex items-start">
+                      <CheckCircle className="h-4 w-4 text-neon-green mt-1 mr-2 flex-shrink-0" />
+                      <span>Website v1 release with wallet connection & referral system</span>
+                    </li>
+                    <li className="flex items-start">
+                      <CheckCircle className="h-4 w-4 text-neon-green mt-1 mr-2 flex-shrink-0" />
+                      <span>Task system with admin panel integration</span>
+                    </li>
+                    <li className="flex items-start">
+                      <CheckCircle className="h-4 w-4 text-neon-green mt-1 mr-2 flex-shrink-0" />
+                      <span>Early fundraising campaign with supporter badges</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-yellow-400 font-bold mr-2">🔄</span>
+                      <span>Daily check-in and streak reward integration</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-yellow-400 font-bold mr-2">🔄</span>
+                      <span>Community-building via Discord, Twitter, Telegram</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-yellow-400 font-bold mr-2">🔄</span>
+                      <span>Initial partnerships with meme influencers & meme pages</span>
+                    </li>
                   </ul>
                 </div>
               </div>
@@ -346,31 +378,6 @@ const Home: React.FC = () => {
                 <CalendarDays className="h-4 w-4 text-black" />
               </div>
               <div className="md:w-1/2 order-1 md:order-2"></div>
-            </motion.div>
-            
-            {/* Q3 2024 */}
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.5 }}
-              className="flex flex-col md:flex-row items-start relative"
-            >
-              <div className="md:w-1/2 order-2 md:order-1"></div>
-              <div className="absolute left-0 md:left-1/2 transform md:-translate-x-1/2 w-8 h-8 rounded-full bg-neon-green flex items-center justify-center">
-                <CalendarDays className="h-4 w-4 text-black" />
-              </div>
-              <div className="md:w-1/2 md:pl-12 order-1 md:order-2 mt-6 md:mt-0">
-                <h3 className="text-xl text-neon-green font-bold mb-2">Q3 2024</h3>
-                <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 bg-opacity-70">
-                  <h4 className="font-bold mb-2">Foundation Building</h4>
-                  <ul className="text-gray-400 list-disc list-inside text-left ml-2 space-y-2">
-                    <li>WagChain platform launch</li>
-                    <li>$WAG token TGE</li>
-                    <li>Initial task ecosystem</li>
-                    <li>Referral program launch</li>
-                  </ul>
-                </div>
-              </div>
             </motion.div>
           </div>
         </div>
