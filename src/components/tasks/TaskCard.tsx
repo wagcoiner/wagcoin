@@ -1,10 +1,10 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Task } from "@/types";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import { Coins, Check, ExternalLink, Loader2 } from "lucide-react";
+import { Coins, Check, ExternalLink, Loader2, Timer, Clock } from "lucide-react";
 
 interface TaskCardProps {
   task: Task;
@@ -15,6 +15,9 @@ interface TaskCardProps {
 
 const TaskCard: React.FC<TaskCardProps> = ({ task, index, onCompleteTask, completed }) => {
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isTaskStarted, setIsTaskStarted] = useState(false);
+  const [countdown, setCountdown] = useState(60); // 60 seconds = 1 minute
+  const [isReadyToClaim, setIsReadyToClaim] = useState(false);
 
   const difficultyColor = {
     easy: "text-green-400",
@@ -28,15 +31,85 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, index, onCompleteTask, comple
     hard: "bg-red-400/10"
   };
   
+  useEffect(() => {
+    // Check localStorage for an ongoing countdown
+    const checkStoredCountdown = () => {
+      const taskStartTime = localStorage.getItem(`task_${task.id}_start_time`);
+      if (taskStartTime) {
+        const startTimeMs = parseInt(taskStartTime, 10);
+        const elapsedSeconds = Math.floor((Date.now() - startTimeMs) / 1000);
+        
+        if (elapsedSeconds >= 60) {
+          // Countdown already completed
+          setIsTaskStarted(true);
+          setIsReadyToClaim(true);
+          setCountdown(0);
+        } else {
+          // Resume countdown
+          setIsTaskStarted(true);
+          setCountdown(60 - elapsedSeconds);
+          setIsReadyToClaim(false);
+        }
+      }
+    };
+    
+    checkStoredCountdown();
+  }, [task.id]);
+
+  useEffect(() => {
+    let timer: number | undefined;
+    
+    if (isTaskStarted && countdown > 0) {
+      timer = window.setInterval(() => {
+        setCountdown(prevCount => {
+          const newCount = prevCount - 1;
+          if (newCount <= 0) {
+            clearInterval(timer);
+            setIsReadyToClaim(true);
+            return 0;
+          }
+          return newCount;
+        });
+      }, 1000);
+    }
+    
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [isTaskStarted, countdown]);
+
+  const handleStartTask = () => {
+    setIsTaskStarted(true);
+    setCountdown(60);
+    
+    // Store start time in localStorage
+    const startTime = Date.now();
+    localStorage.setItem(`task_${task.id}_start_time`, startTime.toString());
+    
+    // If there's a URL, open it in a new tab
+    if (task.url) {
+      window.open(task.url, "_blank");
+    }
+  };
+  
   const handleTaskComplete = async () => {
-    if (completed || isProcessing) return;
+    if (completed || isProcessing || !isReadyToClaim) return;
     
     setIsProcessing(true);
     try {
       await onCompleteTask(task);
+      // Clear the task timer from localStorage after successful completion
+      localStorage.removeItem(`task_${task.id}_start_time`);
+      setIsTaskStarted(false);
     } finally {
       setIsProcessing(false);
     }
+  };
+
+  const formatTime = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
   return (
@@ -70,7 +143,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, index, onCompleteTask, comple
             </div>
           </div>
           
-          {task.url && (
+          {task.url && !isTaskStarted && !completed && (
             <div className="mt-3">
               <a 
                 href={task.url} 
@@ -83,31 +156,56 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, index, onCompleteTask, comple
               </a>
             </div>
           )}
+
+          {isTaskStarted && !completed && !isReadyToClaim && (
+            <div className="mt-3 flex items-center justify-center">
+              <div className="text-center bg-gray-800 rounded-md p-2 w-full">
+                <div className="flex items-center justify-center gap-2 text-orange-400">
+                  <Clock className="h-4 w-4 animate-pulse" />
+                  <span>Please wait {formatTime(countdown)} before claiming</span>
+                </div>
+              </div>
+            </div>
+          )}
         </CardContent>
         <CardFooter className="pt-0">
-          <Button
-            onClick={handleTaskComplete}
-            disabled={completed || isProcessing}
-            className={
-              completed 
-                ? "bg-gray-700 w-full" 
-                : isProcessing 
+          {completed ? (
+            <Button
+              disabled={true}
+              className="bg-gray-700 w-full"
+            >
+              <Check className="mr-2 h-4 w-4" /> Completed
+            </Button>
+          ) : isTaskStarted ? (
+            <Button
+              onClick={handleTaskComplete}
+              disabled={isProcessing || !isReadyToClaim}
+              className={
+                isProcessing 
                   ? "bg-neon-green/70 hover:bg-neon-green/70 text-black w-full"
-                  : "bg-neon-green hover:bg-neon-green/90 text-black w-full"
-            }
-          >
-            {completed ? (
-              <>
-                <Check className="mr-2 h-4 w-4" /> Completed
-              </>
-            ) : isProcessing ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Processing...
-              </>
-            ) : (
-              "Complete Task"
-            )}
-          </Button>
+                  : isReadyToClaim
+                    ? "bg-neon-green hover:bg-neon-green/90 text-black w-full"
+                    : "bg-gray-700 text-gray-400 w-full cursor-not-allowed"
+              }
+            >
+              {isProcessing ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Processing...
+                </>
+              ) : (
+                <>
+                  <Coins className="mr-2 h-4 w-4" /> Claim Reward
+                </>
+              )}
+            </Button>
+          ) : (
+            <Button
+              onClick={handleStartTask}
+              className="bg-blue-600 hover:bg-blue-700 text-white w-full"
+            >
+              <ExternalLink className="mr-2 h-4 w-4" /> Start Task
+            </Button>
+          )}
         </CardFooter>
       </Card>
     </motion.div>
