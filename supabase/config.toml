@@ -1,1 +1,26 @@
+
 project_id = "eesziftwzulrvotkzekz"
+
+[api]
+enabled = true
+port = 8080
+
+[db]
+port = 5432
+shadow_port = 5433
+major_version = 15
+
+[studio]
+enabled = true
+port = 8082
+api_url = "http://localhost:8080"
+
+[inbucket]
+enabled = true
+port = 8084
+
+[functions]
+enabled = true
+
+[realtime]
+enabled = true

@@ -131,6 +131,48 @@ const Tasks: React.FC = () => {
         return;
       }
 
+      // First check if user entry exists in the users table
+      const { data: userData, error: userError } = await supabase
+        .from("users")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+
+      // If user doesn't exist in the users table, create them
+      if (userError || !userData) {
+        console.log("User not found in users table. Creating entry...");
+        
+        // Generate a random referral code
+        const { data: refCodeData } = await supabase.rpc("generate_random_referral_code");
+        const referralCode = refCodeData || `USER${Math.floor(100000 + Math.random() * 900000)}`;
+        
+        // Create a new user entry
+        const { error: createUserError } = await supabase
+          .from("users")
+          .insert({
+            id: user.id,
+            wallet_address: user?.email || "anonymous",
+            referral_code: referralCode,
+            balance: 0,
+            daily_streak: 1,
+            total_tasks_completed: 0,
+            referral_count: 0
+          });
+          
+        if (createUserError) {
+          console.error("Error creating user:", createUserError);
+          toast({
+            title: "Error",
+            description: `Could not create user profile: ${createUserError.message}`,
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        // Refresh profile
+        await refreshProfile();
+      }
+
       // Insert user task record with detailed logging
       console.log("Attempting to insert user_task with:", {
         user_id: user.id,
@@ -149,7 +191,12 @@ const Tasks: React.FC = () => {
 
       if (insertError) {
         console.error("Insert error details:", insertError);
-        throw insertError;
+        toast({
+          title: "Task Completion Failed",
+          description: `Error: ${insertError.message}`,
+          variant: "destructive",
+        });
+        return;
       }
       
       console.log("Insert successful:", insertData);
@@ -170,7 +217,12 @@ const Tasks: React.FC = () => {
 
       if (updateError) {
         console.error("Update error details:", updateError);
-        throw updateError;
+        toast({
+          title: "Balance Update Failed",
+          description: `Error: ${updateError.message}`,
+          variant: "destructive",
+        });
+        return;
       }
 
       // Refresh profile data to update the balance display
@@ -189,11 +241,11 @@ const Tasks: React.FC = () => {
         title: "Task Completed!",
         description: `You earned ${task.reward} $WAGCoin`,
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error completing task:", error);
       toast({
         title: "Error",
-        description: "Failed to complete task. Please try again.",
+        description: `Failed to complete task: ${error.message || "Unknown error"}`,
         variant: "destructive",
       });
     }
@@ -208,19 +260,6 @@ const Tasks: React.FC = () => {
       <div className="container mx-auto px-4 py-12 flex flex-col items-center justify-center min-h-[60vh] text-center">
         <div className="animate-spin h-12 w-12 border-4 border-neon-green border-t-transparent rounded-full mb-4"></div>
         <p className="text-xl">Loading tasks...</p>
-      </div>
-    );
-  }
-
-  // We only check if user is not logged in, not profile
-  if (!user) {
-    return (
-      <div className="container mx-auto px-4 py-12 flex flex-col items-center justify-center min-h-[60vh] text-center">
-        <Award className="h-16 w-16 text-neon-green mb-4" />
-        <h1 className="text-3xl font-bold mb-4">Sign In Required</h1>
-        <p className="text-xl text-gray-300 mb-8 max-w-md">
-          Sign in to view and complete tasks to earn $WAGCoin rewards
-        </p>
       </div>
     );
   }

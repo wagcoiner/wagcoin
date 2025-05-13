@@ -1,10 +1,10 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Task } from "@/types";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import { Coins, Check, ExternalLink } from "lucide-react";
+import { Coins, Check, ExternalLink, Loader2 } from "lucide-react";
 
 interface TaskCardProps {
   task: Task;
@@ -14,6 +14,8 @@ interface TaskCardProps {
 }
 
 const TaskCard: React.FC<TaskCardProps> = ({ task, index, onCompleteTask, completed }) => {
+  const [isProcessing, setIsProcessing] = useState(false);
+
   const difficultyColor = {
     easy: "text-green-400",
     medium: "text-yellow-400",
@@ -24,6 +26,17 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, index, onCompleteTask, comple
     easy: "bg-green-400/10",
     medium: "bg-yellow-400/10", 
     hard: "bg-red-400/10"
+  };
+  
+  const handleTaskComplete = async () => {
+    if (completed || isProcessing) return;
+    
+    setIsProcessing(true);
+    try {
+      await onCompleteTask(task);
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   return (
@@ -73,13 +86,23 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, index, onCompleteTask, comple
         </CardContent>
         <CardFooter className="pt-0">
           <Button
-            onClick={() => !completed && onCompleteTask(task)}
-            disabled={completed}
-            className={completed ? "bg-gray-700 w-full" : "bg-neon-green hover:bg-neon-green/90 text-black w-full"}
+            onClick={handleTaskComplete}
+            disabled={completed || isProcessing}
+            className={
+              completed 
+                ? "bg-gray-700 w-full" 
+                : isProcessing 
+                  ? "bg-neon-green/70 hover:bg-neon-green/70 text-black w-full"
+                  : "bg-neon-green hover:bg-neon-green/90 text-black w-full"
+            }
           >
             {completed ? (
               <>
                 <Check className="mr-2 h-4 w-4" /> Completed
+              </>
+            ) : isProcessing ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Processing...
               </>
             ) : (
               "Complete Task"

@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -45,6 +46,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Fetch user profile data
   const fetchProfile = async (userId: string) => {
     try {
+      console.log("Fetching profile for user ID:", userId);
+      
       const { data, error } = await supabase
         .from("users")
         .select("*")
@@ -56,6 +59,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return null;
       }
 
+      console.log("Fetched profile:", data);
       return data as UserProfile;
     } catch (error) {
       console.error("Error in fetchProfile:", error);
@@ -63,15 +67,71 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // Ensure user exists in the users table
+  const ensureUserExists = async (userId: string, email?: string) => {
+    try {
+      // Check if user exists first
+      const { data: existingUser, error: checkError } = await supabase
+        .from("users")
+        .select("*")
+        .eq("id", userId)
+        .single();
+        
+      if (checkError || !existingUser) {
+        console.log("User not in users table, creating entry...");
+        
+        // Generate a random referral code
+        const { data: refCodeData } = await supabase.rpc("generate_random_referral_code");
+        const referralCode = refCodeData || `USER${Math.floor(100000 + Math.random() * 900000)}`;
+        
+        // Create the user
+        const { error: createError } = await supabase
+          .from("users")
+          .insert({
+            id: userId,
+            wallet_address: email || "anonymous",
+            referral_code: referralCode,
+            balance: 0,
+            daily_streak: 1,
+            total_tasks_completed: 0,
+            referral_count: 0
+          });
+          
+        if (createError) {
+          console.error("Error creating user:", createError);
+          return false;
+        }
+        
+        return true;
+      }
+      
+      return true; // User already exists
+    } catch (error) {
+      console.error("Error in ensureUserExists:", error);
+      return false;
+    }
+  };
+
   // Refresh profile data
   const refreshProfile = async () => {
     if (!user?.id) return;
+    
+    // First ensure user exists in the users table
+    await ensureUserExists(user.id, user.email);
     
     const profileData = await fetchProfile(user.id);
     
     if (profileData) {
       setProfile(profileData);
       setIsAdmin(profileData.role === 'admin');
+    } else {
+      // If we still couldn't get profile after ensuring user exists, something is wrong
+      console.error("Failed to fetch user profile even after ensuring user exists");
+      toast({
+        title: "Error",
+        description: "Could not load your profile. Please try signing in again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -88,6 +148,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           // Don't make any Supabase calls directly in the callback
           // Use setTimeout to avoid potential deadlocks
           setTimeout(async () => {
+            // Ensure user exists in users table
+            await ensureUserExists(newUser.id, newUser.email);
+            
             const profileData = await fetchProfile(newUser.id);
             if (profileData) {
               setProfile(profileData);
@@ -98,6 +161,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 .from("users")
                 .update({ last_login: new Date().toISOString() })
                 .eq("id", newUser.id);
+            } else {
+              console.log("Could not find user profile, will try to create one");
             }
             setIsLoading(false);
           }, 0);
@@ -115,13 +180,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        fetchProfile(session.user.id).then((profileData) => {
-          if (profileData) {
-            setProfile(profileData);
-            setIsAdmin(profileData.role === 'admin');
-          }
-          setIsLoading(false);
-        });
+        setTimeout(async () => {
+          // Ensure user exists in users table
+          await ensureUserExists(session.user.id, session.user.email);
+          
+          fetchProfile(session.user.id).then((profileData) => {
+            if (profileData) {
+              setProfile(profileData);
+              setIsAdmin(profileData.role === 'admin');
+            }
+            setIsLoading(false);
+          });
+        }, 0);
       } else {
         setIsLoading(false);
       }
@@ -138,20 +208,48 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!referralCode || !userId) return false;
 
     try {
-      // Call the Supabase function to process the referral
-      const { data, error } = await supabase.functions.invoke('process_referral', {
-        body: {
-          ref_code: referralCode,
-          new_user_id: userId
-        }
-      });
-
-      if (error) {
-        console.error("Error processing referral:", error);
+      // First find the referrer using the code
+      const { data: referrerData, error: referrerError } = await supabase
+        .from("users")
+        .select("id")
+        .eq("referral_code", referralCode)
+        .single();
+        
+      if (referrerError || !referrerData) {
+        console.error("Error finding referrer:", referrerError);
         return false;
       }
-
-      return data;
+      
+      const referrerId = referrerData.id;
+      
+      // Create referral record
+      const { error: referralError } = await supabase
+        .from("referrals")
+        .insert({
+          referrer_id: referrerId,
+          referee_id: userId,
+          reward: 50
+        });
+        
+      if (referralError) {
+        console.error("Error creating referral:", referralError);
+        return false;
+      }
+      
+      // Update referrer's referral count and balance
+      const { error: updateError } = await supabase
+        .from("users")
+        .update({ 
+          referral_count: supabase.rpc('increment', { arg: 1 }),
+          balance: supabase.rpc('increment', { arg: 50 })
+        })
+        .eq("id", referrerId);
+        
+      if (updateError) {
+        console.error("Error updating referrer:", updateError);
+      }
+      
+      return true;
     } catch (error) {
       console.error("Error in processReferral:", error);
       return false;
@@ -172,6 +270,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       if (data.user) {
+        // Create user in users table
+        const userCreated = await ensureUserExists(data.user.id, email);
+        
+        if (!userCreated) {
+          toast({
+            title: "Profile Creation Failed",
+            description: "Your account was created but we couldn't set up your profile. Please contact support.",
+            variant: "destructive",
+          });
+        }
+        
         // If referral code is provided, process it
         if (referralCode) {
           const success = await processReferral(referralCode, data.user.id);
@@ -216,6 +325,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       if (data.user) {
+        // Ensure user exists in users table
+        await ensureUserExists(data.user.id, email);
+        
         toast({
           title: "Welcome Back!",
           description: "You've signed in successfully.",

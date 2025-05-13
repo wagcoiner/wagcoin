@@ -14,10 +14,54 @@ import ReferredUsersList from "@/components/referrals/ReferredUsersList";
 import BalanceCards from "@/components/tasks/BalanceCards";
 
 const Referrals: React.FC = () => {
-  const { user, profile, isLoading } = useAuth();
+  const { user, profile, isLoading, refreshProfile } = useAuth();
   const [referredUsers, setReferredUsers] = useState<ReferredUser[]>([]);
   const [isLoadingReferrals, setIsLoadingReferrals] = useState(true);
   const { toast } = useToast();
+
+  // First ensure user entry exists in users table
+  useEffect(() => {
+    const ensureUserExists = async () => {
+      if (!user?.id) return;
+      
+      try {
+        // Check if user exists
+        const { data: userData, error: userError } = await supabase
+          .from("users")
+          .select("*")
+          .eq("id", user.id)
+          .single();
+          
+        // If user doesn't exist, create them
+        if (userError || !userData) {
+          console.log("User not found in users table. Creating entry...");
+          
+          // Generate a random referral code
+          const { data: refCodeData } = await supabase.rpc("generate_random_referral_code");
+          const referralCode = refCodeData || `USER${Math.floor(100000 + Math.random() * 900000)}`;
+          
+          await supabase
+            .from("users")
+            .insert({
+              id: user.id,
+              wallet_address: user?.email || "anonymous",
+              referral_code: referralCode,
+              balance: 0,
+              daily_streak: 1,
+              total_tasks_completed: 0,
+              referral_count: 0
+            });
+            
+          // Refresh profile
+          await refreshProfile();
+        }
+      } catch (error) {
+        console.error("Error ensuring user exists:", error);
+      }
+    };
+    
+    ensureUserExists();
+  }, [user?.id, refreshProfile]);
 
   useEffect(() => {
     const fetchReferredUsers = async () => {
@@ -34,7 +78,16 @@ const Referrals: React.FC = () => {
           .select("referee_id")
           .eq("referrer_id", user.id);
 
-        if (error) throw error;
+        if (error) {
+          console.error("Error fetching referrals:", error);
+          toast({
+            title: "Error",
+            description: `Failed to load referrals: ${error.message}`,
+            variant: "destructive",
+          });
+          setIsLoadingReferrals(false);
+          return;
+        }
 
         if (referrals && referrals.length > 0) {
           const refereeIds = referrals.map(ref => ref.referee_id);
@@ -44,7 +97,16 @@ const Referrals: React.FC = () => {
             .select("id, wallet_address, created_at")
             .in("id", refereeIds);
 
-          if (usersError) throw usersError;
+          if (usersError) {
+            console.error("Error fetching referred users:", usersError);
+            toast({
+              title: "Error",
+              description: `Failed to load referred users: ${usersError.message}`,
+              variant: "destructive",
+            });
+            setIsLoadingReferrals(false);
+            return;
+          }
           
           // Convert users to ReferredUser type
           const formattedUsers: ReferredUser[] = users?.map(user => ({
@@ -61,11 +123,11 @@ const Referrals: React.FC = () => {
         } else {
           setReferredUsers([]);
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error fetching referred users:", error);
         toast({
           title: "Error",
-          description: "Failed to load referred users",
+          description: `Failed to load referred users: ${error.message || "Unknown error"}`,
           variant: "destructive",
         });
       } finally {
@@ -74,7 +136,7 @@ const Referrals: React.FC = () => {
     };
 
     fetchReferredUsers();
-  }, [user?.id, toast]);
+  }, [user?.id, toast, refreshProfile]);
 
   if (isLoading) {
     return (

@@ -17,7 +17,14 @@ const ReferralCards: React.FC<ReferralCardsProps> = ({ profile }) => {
   const { toast } = useToast();
 
   const handleCopyReferralLink = () => {
-    if (!profile?.referral_code) return;
+    if (!profile?.referral_code) {
+      toast({
+        title: "Error",
+        description: "Referral code not found",
+        variant: "destructive",
+      });
+      return;
+    }
 
     setCopyingLink(true);
     const baseUrl = window.location.origin;
@@ -44,7 +51,14 @@ const ReferralCards: React.FC<ReferralCardsProps> = ({ profile }) => {
   };
 
   const handleCopyReferralCode = () => {
-    if (!profile?.referral_code) return;
+    if (!profile?.referral_code) {
+      toast({
+        title: "Error",
+        description: "Referral code not found",
+        variant: "destructive",
+      });
+      return;
+    }
     
     setCopyingCode(true);
     navigator.clipboard.writeText(profile.referral_code).then(
@@ -66,6 +80,16 @@ const ReferralCards: React.FC<ReferralCardsProps> = ({ profile }) => {
       }
     );
   };
+
+  if (!profile?.referral_code) {
+    return (
+      <Card className="border-neon-green/20 bg-gray-900 p-6">
+        <div className="text-center">
+          <p>Loading referral information...</p>
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <motion.div
