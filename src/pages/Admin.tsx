@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -21,8 +21,20 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowRight, AlertTriangle } from "lucide-react";
+import { ArrowRight, AlertTriangle, Trash } from "lucide-react";
 import { motion } from "framer-motion";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 // Define the schema for task creation
 const taskFormSchema = z.object({
@@ -41,10 +53,52 @@ const taskFormSchema = z.object({
 // Define the type for our form
 type TaskFormValues = z.infer<typeof taskFormSchema>;
 
+// Define task type
+interface Task {
+  id: string;
+  title: string;
+  description: string;
+  reward: number;
+  difficulty: string;
+  type: string;
+  url: string | null;
+}
+
 const Admin: React.FC = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const isAdmin = localStorage.getItem("wagcoin_admin") === "true";
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [loading, setLoading] = useState(true);
+  
+  // Load all tasks when component mounts
+  useEffect(() => {
+    const fetchTasks = async () => {
+      try {
+        setLoading(true);
+        
+        const { data, error } = await supabase
+          .from("tasks")
+          .select("*")
+          .order("created_at", { ascending: false });
+          
+        if (error) throw error;
+        
+        setTasks(data || []);
+      } catch (error) {
+        console.error("Error fetching tasks:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load tasks. Please try again later.",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchTasks();
+  }, [toast]);
   
   // Initialize form with validation schema
   const form = useForm<TaskFormValues>({
@@ -63,7 +117,7 @@ const Admin: React.FC = () => {
   const onSubmit = async (data: TaskFormValues) => {
     try {
       // Insert the new task into Supabase
-      const { error } = await supabase
+      const { data: newTask, error } = await supabase
         .from("tasks")
         .insert({
           title: data.title,
@@ -72,10 +126,16 @@ const Admin: React.FC = () => {
           difficulty: data.difficulty,
           type: data.type,
           url: data.destination_url || null,
-        });
+        })
+        .select();
 
       if (error) {
         throw error;
+      }
+
+      // Add the new task to our local state
+      if (newTask && newTask.length > 0) {
+        setTasks([newTask[0], ...tasks]);
       }
 
       // Show success toast
@@ -92,6 +152,33 @@ const Admin: React.FC = () => {
       toast({
         title: "Error",
         description: `Failed to create task: ${(error as any).message}`,
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Handle task deletion
+  const handleDeleteTask = async (taskId: string) => {
+    try {
+      const { error } = await supabase
+        .from("tasks")
+        .delete()
+        .eq("id", taskId);
+
+      if (error) throw error;
+
+      // Update the tasks state by filtering out the deleted task
+      setTasks(tasks.filter(task => task.id !== taskId));
+
+      toast({
+        title: "Task Deleted",
+        description: "The task has been successfully deleted.",
+      });
+    } catch (error) {
+      console.error("Error deleting task:", error);
+      toast({
+        title: "Error",
+        description: `Failed to delete task: ${(error as any).message}`,
         variant: "destructive",
       });
     }
@@ -132,7 +219,7 @@ const Admin: React.FC = () => {
           </Button>
         </div>
 
-        <Card className="max-w-3xl mx-auto border-neon-green/20 bg-gray-900">
+        <Card className="max-w-3xl mx-auto border-neon-green/20 bg-gray-900 mb-8">
           <CardHeader>
             <CardTitle>Create New Task</CardTitle>
             <CardDescription>
@@ -281,6 +368,71 @@ const Admin: React.FC = () => {
                 </div>
               </form>
             </Form>
+          </CardContent>
+        </Card>
+
+        {/* Display existing tasks table */}
+        <Card className="max-w-3xl mx-auto border-neon-green/20 bg-gray-900">
+          <CardHeader>
+            <CardTitle>Existing Tasks</CardTitle>
+            <CardDescription>
+              Manage tasks that users can complete
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="text-center py-8">Loading tasks...</div>
+            ) : tasks.length === 0 ? (
+              <div className="text-center py-8 text-gray-400">No tasks have been created yet.</div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Title</TableHead>
+                    <TableHead className="hidden md:table-cell">Difficulty</TableHead>
+                    <TableHead className="hidden md:table-cell">Type</TableHead>
+                    <TableHead>Reward</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {tasks.map((task) => (
+                    <TableRow key={task.id}>
+                      <TableCell className="font-medium">{task.title}</TableCell>
+                      <TableCell className="hidden md:table-cell capitalize">{task.difficulty}</TableCell>
+                      <TableCell className="hidden md:table-cell capitalize">{task.type}</TableCell>
+                      <TableCell>{task.reward} $WAG</TableCell>
+                      <TableCell>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="outline" size="icon" className="text-red-500 border-red-500/30 hover:bg-red-500/10">
+                              <Trash size={16} />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This will permanently delete the task "{task.title}". This action cannot be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction 
+                                onClick={() => handleDeleteTask(task.id)}
+                                className="bg-red-500 hover:bg-red-600"
+                              >
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </CardContent>
         </Card>
       </motion.div>
