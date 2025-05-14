@@ -1,41 +1,41 @@
 
 <svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- Dog Face Shape -->
-  <circle cx="60" cy="60" r="55" fill="#FFA500" />
-  <circle cx="60" cy="60" r="50" fill="#F8C471" />
+  <!-- Background circle (for favicon use) -->
+  <circle cx="60" cy="60" r="58" fill="black" />
+  
+  <!-- Shiba Inu Head Shape -->
+  <circle cx="60" cy="60" r="50" fill="white" />
   
   <!-- Ears -->
-  <path d="M25 30C15 25 10 40 18 48" stroke="brown" stroke-width="4" stroke-linecap="round" />
-  <path d="M95 30C105 25 110 40 102 48" stroke="brown" stroke-width="4" stroke-linecap="round" />
+  <path d="M30 30C20 25 15 35 22 45" stroke="black" stroke-width="4" stroke-linecap="round" />
+  <path d="M90 30C100 25 105 35 98 45" stroke="black" stroke-width="4" stroke-linecap="round" />
+  
+  <!-- Inner ears -->
+  <path d="M28 35C24 32 22 36 25 40" fill="#FEC6A1" />
+  <path d="M92 35C96 32 98 36 95 40" fill="#FEC6A1" />
   
   <!-- Eyes -->
-  <ellipse cx="42" cy="54" rx="8" ry="7" fill="black" />
-  <ellipse cx="78" cy="54" rx="8" ry="7" fill="black" />
+  <ellipse cx="44" cy="55" rx="6" ry="7" fill="black" />
+  <ellipse cx="76" cy="55" rx="6" ry="7" fill="black" />
+  
+  <!-- Eyebrow raised -->
+  <path d="M72 46C76 43 82 44 86 47" stroke="black" stroke-width="2.5" stroke-linecap="round" />
+  <path d="M40 48C44 46 50 46 54 48" stroke="black" stroke-width="2.5" stroke-linecap="round" />
   
   <!-- Shine in eyes -->
-  <circle cx="44" cy="52" r="2" fill="white" />
-  <circle cx="80" cy="52" r="2" fill="white" />
+  <circle cx="46" cy="53" r="1.5" fill="white" />
+  <circle cx="78" cy="53" r="1.5" fill="white" />
   
   <!-- Nose -->
-  <ellipse cx="60" cy="68" rx="8" ry="5" fill="#333333" />
+  <ellipse cx="60" cy="70" rx="7" ry="5" fill="black" />
   
-  <!-- Mouth -->
-  <path d="M60 75C60 85 72 88 80 83M60 75C60 85 48 88 40 83" stroke="#333333" stroke-width="3" stroke-linecap="round" />
+  <!-- Hoodie/Jacket collar -->
+  <path d="M35 85C42 96 78 96 85 85" fill="#39FF14" stroke="black" stroke-width="3" />
   
-  <!-- Tongue -->
-  <path d="M57 80C60 85 63 85 66 80" fill="#FF6B6B" stroke="#FF6B6B" stroke-width="1.5" />
+  <!-- Mouth - cheeky grin -->
+  <path d="M60 75C60 83 70 87 78 84M60 75C60 83 50 87 42 84" stroke="black" stroke-width="3" stroke-linecap="round" />
   
-  <!-- Whiskers -->
-  <line x1="30" y1="68" x2="45" y2="72" stroke="#333333" stroke-width="2" />
-  <line x1="30" y1="75" x2="45" y2="75" stroke="#333333" stroke-width="2" />
-  <line x1="90" y1="68" x2="75" y2="72" stroke="#333333" stroke-width="2" />
-  <line x1="90" y1="75" x2="75" y2="75" stroke="#333333" stroke-width="2" />
-
   <!-- Cheeks -->
-  <circle cx="38" cy="74" r="5" fill="#FFCCCC" opacity="0.6" />
-  <circle cx="82" cy="74" r="5" fill="#FFCCCC" opacity="0.6" />
-  
-  <!-- Eyebrows -->
-  <path d="M36 46C40 43 46 43 50 46" stroke="#333333" stroke-width="2" stroke-linecap="round" />
-  <path d="M70 46C74 43 80 43 84 46" stroke="#333333" stroke-width="2" stroke-linecap="round" />
+  <circle cx="38" cy="74" r="6" fill="#FEC6A1" opacity="0.8" />
+  <circle cx="82" cy="74" r="6" fill="#FEC6A1" opacity="0.8" />
 </svg>
