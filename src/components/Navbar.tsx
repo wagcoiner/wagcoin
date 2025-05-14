@@ -3,7 +3,7 @@ import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { Coins, Shield, Menu, LogOut, LogIn } from "lucide-react";
+import { Shield, Menu, LogOut, LogIn } from "lucide-react";
 import UserBalance from "./UserBalance";
 
 interface NavbarProps {
@@ -11,8 +11,9 @@ interface NavbarProps {
 }
 
 const Navbar: React.FC<NavbarProps> = ({ onOpenMobileMenu }) => {
-  const { user, profile, signOut, isAdmin } = useAuth();
+  const { user, profile, signOut } = useAuth();
   const location = useLocation();
+  const isAdmin = localStorage.getItem("wagcoin_admin") === "true";
   
   return (
     <header className="fixed z-50 w-full bg-black border-b border-gray-800">

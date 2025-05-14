@@ -22,7 +22,7 @@ import { LockKeyhole } from "lucide-react";
 
 // Define the schema for admin login
 const adminLoginSchema = z.object({
-  username: z.string().min(1, { message: "Username is required" }),
+  email: z.string().email({ message: "Please enter a valid email address" }),
   password: z.string().min(1, { message: "Password is required" }),
 });
 
@@ -38,7 +38,7 @@ const AdminLogin: React.FC = () => {
   const form = useForm<AdminLoginValues>({
     resolver: zodResolver(adminLoginSchema),
     defaultValues: {
-      username: "",
+      email: "",
       password: "",
     },
   });
@@ -48,10 +48,8 @@ const AdminLogin: React.FC = () => {
     try {
       setIsLoading(true);
       
-      // In a real app, you would check credentials against an admins table in Supabase
-      // For this example, we'll use a hardcoded check
-      // IMPORTANT: In production, you should never hardcode credentials
-      if (data.username === "admin" && data.password === "wagcoin123") {
+      // Check hardcoded admin credentials
+      if (data.email === "admin@gmail.com" && data.password === "admin123") {
         // Store admin session in localStorage
         localStorage.setItem("wagcoin_admin", "true");
         
@@ -64,7 +62,7 @@ const AdminLogin: React.FC = () => {
       } else {
         toast({
           title: "Login Failed",
-          description: "Invalid username or password",
+          description: "Invalid email or password",
           variant: "destructive",
         });
       }
@@ -104,12 +102,12 @@ const AdminLogin: React.FC = () => {
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 <FormField
                   control={form.control}
-                  name="username"
+                  name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Username</FormLabel>
+                      <FormLabel>Email</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter your admin username" {...field} />
+                        <Input placeholder="admin@gmail.com" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -123,7 +121,7 @@ const AdminLogin: React.FC = () => {
                     <FormItem>
                       <FormLabel>Password</FormLabel>
                       <FormControl>
-                        <Input type="password" placeholder="Enter your password" {...field} />
+                        <Input type="password" placeholder="••••••••" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

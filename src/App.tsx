@@ -14,6 +14,7 @@ import Coinomics from "@/pages/Coinomics";
 import About from "@/pages/About";
 import Admin from "@/pages/Admin";
 import AdminUsers from "@/pages/AdminUsers";
+import AdminLogin from "@/pages/AdminLogin";
 import Airdrop from "@/pages/Airdrop";
 import NotFound from "@/pages/NotFound";
 
@@ -34,14 +35,10 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
 // Admin route component
 const AdminRoute = ({ children }: { children: React.ReactNode }) => {
-  const { isAdmin, isLoading } = useAuth();
-  
-  if (isLoading) {
-    return <div className="flex justify-center items-center h-screen">Loading...</div>;
-  }
+  const isAdmin = localStorage.getItem("wagcoin_admin") === "true";
   
   if (!isAdmin) {
-    return <Navigate to="/" />;
+    return <Navigate to="/admin-login" />;
   }
   
   return <>{children}</>;
@@ -73,6 +70,7 @@ const AppRoutes = () => {
             </ProtectedRoute>
           } />
           <Route path="/about" element={<About />} />
+          <Route path="/admin-login" element={<AdminLogin />} />
           <Route path="/admin" element={
             <AdminRoute>
               <Admin />

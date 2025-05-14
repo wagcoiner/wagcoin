@@ -1,5 +1,5 @@
 
-import React, { useEffect } from "react";
+import React from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { ArrowRight, AlertTriangle } from "lucide-react";
@@ -35,24 +35,16 @@ const taskFormSchema = z.object({
   type: z.enum(["daily", "weekly"], { 
     required_error: "Please select a task frequency" 
   }),
-  url: z.string().url({ message: "Please enter a valid URL" }).optional().or(z.literal("")),
+  destination_url: z.string().url({ message: "Please enter a valid URL" }).optional().or(z.literal("")),
 });
 
 // Define the type for our form
 type TaskFormValues = z.infer<typeof taskFormSchema>;
 
 const Admin: React.FC = () => {
-  const { user } = useAuth(); // Use user from AuthContext instead of WalletContext
   const { toast } = useToast();
   const navigate = useNavigate();
   const isAdmin = localStorage.getItem("wagcoin_admin") === "true";
-  
-  useEffect(() => {
-    // Redirect to admin login if not admin
-    if (!isAdmin) {
-      navigate("/admin-login");
-    }
-  }, [isAdmin, navigate]);
   
   // Initialize form with validation schema
   const form = useForm<TaskFormValues>({
@@ -63,7 +55,7 @@ const Admin: React.FC = () => {
       reward: 0,
       difficulty: "medium",
       type: "daily",
-      url: "",
+      destination_url: "",
     },
   });
   
@@ -79,7 +71,7 @@ const Admin: React.FC = () => {
           reward: data.reward,
           difficulty: data.difficulty,
           type: data.type,
-          url: data.url || null,
+          url: data.destination_url || null,
         });
 
       if (error) {
@@ -105,7 +97,7 @@ const Admin: React.FC = () => {
     }
   };
 
-  // If not admin or logged in user, show access required message
+  // If not admin, show access required message
   if (!isAdmin) {
     return (
       <div className="container mx-auto px-4 py-12 text-center">
@@ -127,7 +119,7 @@ const Admin: React.FC = () => {
         transition={{ duration: 0.5 }}
       >
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-center">Admin Dashboard</h1>
+          <h1 className="text-3xl font-bold">Admin Dashboard</h1>
           <Button 
             variant="outline" 
             onClick={() => {
@@ -206,7 +198,7 @@ const Admin: React.FC = () => {
                   
                   <FormField
                     control={form.control}
-                    name="url"
+                    name="destination_url"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Destination URL (Optional)</FormLabel>

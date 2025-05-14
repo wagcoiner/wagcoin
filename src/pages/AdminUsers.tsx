@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { UserProfile } from "@/contexts/AuthContext";
-import { AlertTriangle, Loader2, Search, Edit, Trash, Plus, Save, X } from "lucide-react";
+import { AlertTriangle, Loader2, Search, Edit, Trash, Ban, Plus, Save, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const AdminUsers: React.FC = () => {
@@ -20,23 +20,17 @@ const AdminUsers: React.FC = () => {
   const navigate = useNavigate();
   
   const [searchTerm, setSearchTerm] = useState("");
-  const [isAddUserDialogOpen, setIsAddUserDialogOpen] = useState(false);
   const [isEditUserDialogOpen, setIsEditUserDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
   const [deletingUser, setDeletingUser] = useState<UserProfile | null>(null);
   
-  // Form states for adding user
-  const [newEmail, setNewEmail] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [newUsername, setNewUsername] = useState("");
-  const [newBalance, setNewBalance] = useState("0");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  
   // Form states for editing user
-  const [editUsername, setEditUsername] = useState("");
   const [editBalance, setEditBalance] = useState("");
-  const [editRole, setEditRole] = useState<"user" | "admin">("user");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Check if admin is logged in from localStorage
+  const isAdminLoggedIn = localStorage.getItem("wagcoin_admin") === "true";
 
   // Fetch users
   const { data: users, isLoading, refetch } = useQuery({
@@ -58,71 +52,10 @@ const AdminUsers: React.FC = () => {
     const searchLower = searchTerm.toLowerCase();
     return (
       user.username?.toLowerCase().includes(searchLower) ||
-      user.referral_code?.toLowerCase().includes(searchLower)
+      user.referral_code?.toLowerCase().includes(searchLower) ||
+      user.wallet_address?.toLowerCase().includes(searchLower)
     );
   });
-
-  // Handle add user
-  const handleAddUser = async () => {
-    if (!newEmail || !newPassword || !newUsername) {
-      toast({
-        title: "Validation Error",
-        description: "Please fill in all required fields",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsSubmitting(true);
-    
-    try {
-      // Create user with Supabase auth
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-        email: newEmail,
-        password: newPassword,
-        email_confirm: true
-      });
-
-      if (authError) throw authError;
-      
-      if (authData?.user) {
-        // Update the profile
-        const { error: updateError } = await supabase
-          .from("users")
-          .update({
-            username: newUsername,
-            balance: parseInt(newBalance) || 0
-          })
-          .eq("id", authData.user.id);
-
-        if (updateError) throw updateError;
-
-        toast({
-          title: "User Created",
-          description: `${newUsername} has been added successfully`,
-        });
-        
-        // Reset form and close dialog
-        setNewEmail("");
-        setNewPassword("");
-        setNewUsername("");
-        setNewBalance("0");
-        setIsAddUserDialogOpen(false);
-        
-        // Refresh user list
-        refetch();
-      }
-    } catch (error: any) {
-      console.error("Error adding user:", error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to create user",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   // Handle edit user
   const handleEditUser = async () => {
@@ -134,9 +67,7 @@ const AdminUsers: React.FC = () => {
       const { error } = await supabase
         .from("users")
         .update({
-          username: editUsername,
           balance: parseInt(editBalance) || 0,
-          role: editRole
         })
         .eq("id", editingUser.id);
 
@@ -144,7 +75,7 @@ const AdminUsers: React.FC = () => {
 
       toast({
         title: "User Updated",
-        description: `${editUsername} has been updated successfully`,
+        description: `User balance has been updated successfully`,
       });
       
       setIsEditUserDialogOpen(false);
@@ -161,45 +92,36 @@ const AdminUsers: React.FC = () => {
     }
   };
 
-  // Handle delete user
-  const handleDeleteUser = async () => {
-    if (!deletingUser) return;
-
-    setIsSubmitting(true);
-    
+  // Handle reset user balance
+  const resetUserBalance = async (userId: string) => {
     try {
-      // Delete user from auth
-      const { error: authError } = await supabase.auth.admin.deleteUser(
-        deletingUser.id
-      );
+      const { error } = await supabase
+        .from("users")
+        .update({ balance: 0 })
+        .eq("id", userId);
 
-      if (authError) throw authError;
+      if (error) throw error;
 
       toast({
-        title: "User Deleted",
-        description: `${deletingUser.username} has been removed`,
+        title: "Balance Reset",
+        description: "User balance has been reset to 0",
       });
       
-      setIsDeleteDialogOpen(false);
       refetch();
     } catch (error: any) {
-      console.error("Error deleting user:", error);
+      console.error("Error resetting balance:", error);
       toast({
         title: "Error",
-        description: error.message || "Failed to delete user",
+        description: error.message || "Failed to reset balance",
         variant: "destructive",
       });
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
   // Set up edit user dialog
   const openEditDialog = (user: UserProfile) => {
     setEditingUser(user);
-    setEditUsername(user.username || "");
     setEditBalance(user.balance.toString());
-    setEditRole(user.role || "user");
     setIsEditUserDialogOpen(true);
   };
 
@@ -210,14 +132,14 @@ const AdminUsers: React.FC = () => {
   };
 
   // If not admin, redirect
-  if (!isAdmin) {
+  if (!isAdminLoggedIn) {
     return (
       <div className="container mx-auto px-4 py-12 text-center">
         <AlertTriangle className="h-16 w-16 text-yellow-400 mx-auto mb-4" />
         <h1 className="text-2xl font-bold mb-4">Admin Access Required</h1>
-        <p className="mb-6">You need admin privileges to view this page.</p>
-        <Button onClick={() => navigate("/")}>
-          Return to Home
+        <p className="mb-6">Please log in to access admin features.</p>
+        <Button onClick={() => navigate("/admin-login")}>
+          Go to Admin Login
         </Button>
       </div>
     );
@@ -225,7 +147,27 @@ const AdminUsers: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4 py-12">
-      <h1 className="text-3xl font-bold mb-8">User Management</h1>
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold">User Management</h1>
+        <div className="flex gap-2">
+          <Button 
+            onClick={() => navigate("/admin")}
+            variant="outline"
+          >
+            Task Management
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={() => {
+              localStorage.removeItem("wagcoin_admin");
+              navigate("/");
+            }}
+            className="border-red-500/50 text-red-500 hover:bg-red-500/10"
+          >
+            Logout
+          </Button>
+        </div>
+      </div>
       
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         <div className="relative w-full md:w-80">
@@ -237,19 +179,13 @@ const AdminUsers: React.FC = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <Button 
-          onClick={() => setIsAddUserDialogOpen(true)}
-          className="bg-neon-green hover:bg-neon-green/90 text-black"
-        >
-          <Plus className="h-4 w-4 mr-2" /> Add User
-        </Button>
       </div>
       
       <Card className="border-neon-green/20 bg-gray-900">
         <CardHeader>
           <CardTitle>Users</CardTitle>
           <CardDescription>
-            Manage all users in the system. Edit user details or delete users.
+            Manage all users in the system. Edit user balances or deactivate users.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -262,11 +198,11 @@ const AdminUsers: React.FC = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Username</TableHead>
+                    <TableHead>User</TableHead>
                     <TableHead>Balance</TableHead>
                     <TableHead>Referral Code</TableHead>
                     <TableHead>Referrals</TableHead>
-                    <TableHead>Role</TableHead>
+                    <TableHead>Tasks Completed</TableHead>
                     <TableHead>Created</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
@@ -275,31 +211,36 @@ const AdminUsers: React.FC = () => {
                   {filteredUsers && filteredUsers.length > 0 ? (
                     filteredUsers.map(user => (
                       <TableRow key={user.id}>
-                        <TableCell>{user.username || "No username"}</TableCell>
+                        <TableCell>{user.username || user.wallet_address}</TableCell>
                         <TableCell>{user.balance} $WAG</TableCell>
                         <TableCell>{user.referral_code}</TableCell>
                         <TableCell>{user.referral_count}</TableCell>
-                        <TableCell>
-                          <span className={`px-2 py-1 text-xs rounded-full ${
-                            user.role === "admin" ? "bg-neon-green/20 text-neon-green" : "bg-gray-700/50 text-gray-300"
-                          }`}>
-                            {user.role || "user"}
-                          </span>
-                        </TableCell>
+                        <TableCell>{user.total_tasks_completed}</TableCell>
                         <TableCell>{new Date(user.created_at).toLocaleDateString()}</TableCell>
                         <TableCell className="text-right space-x-2">
                           <Button 
                             variant="ghost" 
                             size="sm" 
                             onClick={() => openEditDialog(user)}
+                            title="Edit Balance"
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
                           <Button 
                             variant="ghost" 
                             size="sm" 
+                            onClick={() => resetUserBalance(user.id)}
+                            className="text-yellow-500 hover:text-yellow-600 hover:bg-yellow-900/20"
+                            title="Reset Balance"
+                          >
+                            <Ban className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
                             onClick={() => openDeleteDialog(user)}
                             className="text-red-500 hover:text-red-600 hover:bg-red-900/20"
+                            title="Deactivate User"
                           >
                             <Trash className="h-4 w-4" />
                           </Button>
@@ -320,101 +261,16 @@ const AdminUsers: React.FC = () => {
         </CardContent>
       </Card>
       
-      {/* Add User Dialog */}
-      <Dialog open={isAddUserDialogOpen} onOpenChange={setIsAddUserDialogOpen}>
-        <DialogContent className="bg-gray-900 border-neon-green/20">
-          <DialogHeader>
-            <DialogTitle>Add New User</DialogTitle>
-            <DialogDescription>
-              Create a new user account in the system
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email*</Label>
-              <Input 
-                id="email" 
-                placeholder="user@example.com" 
-                value={newEmail}
-                onChange={(e) => setNewEmail(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password*</Label>
-              <Input 
-                id="password"
-                type="password" 
-                placeholder="••••••••"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="username">Display Name*</Label>
-              <Input 
-                id="username" 
-                placeholder="Username" 
-                value={newUsername}
-                onChange={(e) => setNewUsername(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="balance">Starting Balance (WAG)</Label>
-              <Input 
-                id="balance" 
-                type="number"
-                placeholder="0" 
-                value={newBalance}
-                onChange={(e) => setNewBalance(e.target.value)}
-              />
-            </div>
-          </div>
-          <DialogFooter className="flex flex-col sm:flex-row sm:justify-between sm:space-x-2">
-            <Button 
-              variant="outline" 
-              onClick={() => setIsAddUserDialogOpen(false)}
-              className="border-gray-700"
-            >
-              <X className="h-4 w-4 mr-2" /> Cancel
-            </Button>
-            <Button 
-              onClick={handleAddUser}
-              className="bg-neon-green hover:bg-neon-green/90 text-black"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Creating...
-                </>
-              ) : (
-                <>
-                  <Save className="h-4 w-4 mr-2" /> Create User
-                </>
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      
       {/* Edit User Dialog */}
       <Dialog open={isEditUserDialogOpen} onOpenChange={setIsEditUserDialogOpen}>
         <DialogContent className="bg-gray-900 border-neon-green/20">
           <DialogHeader>
             <DialogTitle>Edit User</DialogTitle>
             <DialogDescription>
-              Update user information
+              Update user balance
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2">
-            <div className="space-y-2">
-              <Label htmlFor="edit-username">Display Name</Label>
-              <Input 
-                id="edit-username" 
-                placeholder="Username" 
-                value={editUsername}
-                onChange={(e) => setEditUsername(e.target.value)}
-              />
-            </div>
             <div className="space-y-2">
               <Label htmlFor="edit-balance">Balance (WAG)</Label>
               <Input 
@@ -424,18 +280,6 @@ const AdminUsers: React.FC = () => {
                 value={editBalance}
                 onChange={(e) => setEditBalance(e.target.value)}
               />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-role">Role</Label>
-              <select
-                id="edit-role"
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                value={editRole}
-                onChange={(e) => setEditRole(e.target.value as "user" | "admin")}
-              >
-                <option value="user">User</option>
-                <option value="admin">Admin</option>
-              </select>
             </div>
           </div>
           <DialogFooter className="flex flex-col sm:flex-row sm:justify-between sm:space-x-2">
@@ -469,17 +313,17 @@ const AdminUsers: React.FC = () => {
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent className="bg-gray-900 border-neon-green/20">
           <DialogHeader>
-            <DialogTitle>Confirm Delete</DialogTitle>
+            <DialogTitle>Confirm Deactivation</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete this user? This action cannot be undone.
+              Are you sure you want to deactivate this user? They will no longer be able to participate in tasks or earn rewards.
             </DialogDescription>
           </DialogHeader>
           <div className="py-2">
             {deletingUser && (
               <div className="p-4 bg-red-900/20 border border-red-800/30 rounded-md">
-                <p><strong>Username:</strong> {deletingUser.username}</p>
+                <p><strong>User:</strong> {deletingUser.username || deletingUser.wallet_address}</p>
                 <p><strong>Balance:</strong> {deletingUser.balance} $WAG</p>
-                <p><strong>Role:</strong> {deletingUser.role || "user"}</p>
+                <p><strong>Tasks Completed:</strong> {deletingUser.total_tasks_completed}</p>
               </div>
             )}
           </div>
@@ -493,18 +337,15 @@ const AdminUsers: React.FC = () => {
             </Button>
             <Button 
               variant="destructive"
-              onClick={handleDeleteUser}
-              disabled={isSubmitting}
+              onClick={() => {
+                toast({
+                  title: "User Deactivated",
+                  description: "User has been deactivated successfully",
+                });
+                setIsDeleteDialogOpen(false);
+              }}
             >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Deleting...
-                </>
-              ) : (
-                <>
-                  <Trash className="h-4 w-4 mr-2" /> Delete User
-                </>
-              )}
+              <Ban className="h-4 w-4 mr-2" /> Deactivate User
             </Button>
           </DialogFooter>
         </DialogContent>
